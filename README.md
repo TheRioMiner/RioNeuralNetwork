@@ -1,15 +1,15 @@
 # Rio Neural Network
-Simple and performance neural network .NET library
+Simple and performance neural network _.NET_ library
 
-Its use native C++ dll for AVX2 acceleration!
+Its use native C++ dll for __AVX2__ acceleration!
 
  
 # Autoencoders
-In this test 5620 examples in epoch, epoch time is 66 (±2) seconds.
+In this test 5620 examples in epoch, epoch time is ~66 (±2) seconds.
 
-From this - 66 / 5620 = ~0,0117437 sec = ~11.7 ms for 1 example in training mode.
+From this - 66 / 5620 = __~0,0117437__ sec = __~11.7__ ms for 1 example in training mode.
 
-In image below, results of training in 2400 epochs! Reached error per epoch: ~270.
+In image below, results of training in __2400__ epochs! Reached error per epoch: __~270__.
 [![](https://i.imgur.com/gcpUCJY.png)](https://i.imgur.com/gcpUCJY.png)
 
  
@@ -18,7 +18,7 @@ Even for classical neural networks with direct distribution, the recognition of 
 
 But I decided to do a test with partial MNIST dataset. _(only 10000 images for train and 1000 for test)_
 
-In this test network trained in 41 epochs. Reached __test__ error per epoch: ~14 (error for test dataset!).
+In this test network trained in 41 epochs. Reached __test__ error per epoch: ~16 (error for test dataset!).
 
 Layers cfg: __256 sigmoid (_input_), 256 tanh, 256 tanh, 256 tanh, 10 sigmoid (_output_)__
 
