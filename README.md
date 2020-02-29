@@ -3,6 +3,8 @@ Simple and performance neural network _.NET_ library
 
 Its use native C++ dll for __AVX2__ acceleration!
 
+Supported x64 and x86 platforms.
+
  
 # Autoencoders
 In this test 5620 examples in epoch, epoch time is ~66 (±2) seconds.
