@@ -1,0 +1,63 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rio Neural Network", "Rio Neural Network\Rio Neural Network.csproj", "{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rio Neural Network Native", "Rio Neural Network Native\Rio Neural Network Native.vcxproj", "{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rio Neural Network Test", "Rio Neural Network Test\Rio Neural Network Test.csproj", "{2E209E77-B4AB-42D9-A102-0EA7F8321936}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|x64.Build.0 = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Debug|x86.Build.0 = Debug|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|x64.ActiveCfg = Release|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|x64.Build.0 = Release|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|x86.ActiveCfg = Release|Any CPU
+		{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}.Release|x86.Build.0 = Release|Any CPU
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Debug|x64.ActiveCfg = Debug|x64
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Debug|x64.Build.0 = Debug|x64
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Debug|x86.ActiveCfg = Debug|Win32
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Debug|x86.Build.0 = Debug|Win32
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Release|Any CPU.ActiveCfg = Release|Win32
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Release|x64.ActiveCfg = Release|x64
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Release|x64.Build.0 = Release|x64
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Release|x86.ActiveCfg = Release|Win32
+		{6F250C65-47DE-4F0B-8A6E-3E5B063B8C99}.Release|x86.Build.0 = Release|Win32
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|x64.Build.0 = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Debug|x86.Build.0 = Debug|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|x64.ActiveCfg = Release|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|x64.Build.0 = Release|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|x86.ActiveCfg = Release|Any CPU
+		{2E209E77-B4AB-42D9-A102-0EA7F8321936}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E820579F-9DC2-4C64-BA58-FB46E47F687E}
+	EndGlobalSection
+EndGlobal
