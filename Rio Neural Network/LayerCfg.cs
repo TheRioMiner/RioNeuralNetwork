@@ -2,25 +2,36 @@
 
 using System;
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
 	public struct LayerCfg
 	{
 		public int NeuronsCount;
+		internal int NeuronsWeightsSize;
 		public ActivationType ActivationType;
 		public float LayerLearnRate;
 
 
-		public LayerCfg(int neuronsCount, ActivationType activationType, float LayerLearnRate = 1f)
+		public LayerCfg(int neuronsCount, ActivationType activationType, float layerLearnRate = 1f)
 		{
 			this.NeuronsCount = neuronsCount;
+			this.NeuronsWeightsSize = 0; //Must be setted further
 			this.ActivationType = activationType;
-			this.LayerLearnRate = LayerLearnRate;
+			this.LayerLearnRate = layerLearnRate;
 		}
 
-		public LayerCfg(int neuronsCount, string activationType, float LayerLearnRate = 1f)
+		internal LayerCfg(int neuronsCount, int neuronsWeightsSize, ActivationType activationType, float layerLearnRate)
 		{
 			this.NeuronsCount = neuronsCount;
+			this.NeuronsWeightsSize = neuronsWeightsSize;
+			this.ActivationType = activationType;
+			this.LayerLearnRate = layerLearnRate;
+		}
+
+		public LayerCfg(int neuronsCount, string activationType, float layerLearnRate = 1f)
+		{
+			this.NeuronsCount = neuronsCount;
+			this.NeuronsWeightsSize = 0; //Must be setted further
 			switch (activationType.ToLower())
 			{
 				case "":
@@ -39,10 +50,10 @@ namespace Rio_Neural_Network
 				default:
 					throw new ArgumentException($"\"{activationType}\" - invalid activation type!");
 			}
-			this.LayerLearnRate = LayerLearnRate;
+			this.LayerLearnRate = layerLearnRate;
 		}
 
-		public LayerCfg(int neuronsCount, float LayerLearnRate = 1f) : this(neuronsCount, ActivationType.Sigmoid, LayerLearnRate)
+		public LayerCfg(int neuronsCount, float layerLearnRate = 1f) : this(neuronsCount, ActivationType.Sigmoid, layerLearnRate)
 		{ }
 	}
 }

@@ -7,7 +7,7 @@
     <ProjectGuid>{DFBBD64C-6593-4538-8A98-2D283A8E7CF9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Rio_Neural_Network</RootNamespace>
+    <RootNamespace>RioNeuralNetwork</RootNamespace>
     <AssemblyName>Rio Neural Network</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -51,7 +51,7 @@
     <Compile Include="NeuralNetwork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StreamExtensions.cs" />
-    <Compile Include="Utils.cs" />
+    <Compile Include="NeuralUtils.cs" />
     <Compile Include="WeightsFillInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

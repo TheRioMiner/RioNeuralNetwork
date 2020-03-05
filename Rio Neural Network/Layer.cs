@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
 	public unsafe struct Layer
 	{
@@ -14,6 +14,13 @@ namespace Rio_Neural_Network
 		public readonly float* Outputs;
 		public readonly float* Errors;
 		public readonly ActivationType ActivationType;
-		private readonly IntPtr ActivationFunc;
+		private readonly IntPtr ActivationFunc; //Ptr to native function of the activation
+
+
+		public LayerCfg ToLayerCfg()
+		{
+			int neuronsWeights = (NeuronsWeightsSize > 1) ? (NeuronsWeightsSize - 1/*bias*/) : 0;
+			return new LayerCfg(NeuronsCount, neuronsWeights, ActivationType, LayerLearnRate);
+		}
 	}
 }

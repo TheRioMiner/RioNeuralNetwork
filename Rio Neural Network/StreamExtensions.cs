@@ -6,7 +6,7 @@ using System.Text;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
     internal static class StreamExtension
     {

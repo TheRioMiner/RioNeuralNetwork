@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using System.Security.Cryptography;
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
     public unsafe class NeuralNetwork : IDisposable
     {
@@ -98,12 +98,17 @@ namespace Rio_Neural_Network
 
 
 
-        /// <summary>
-        /// Initializate neural network without initialization weights (weights initializate by default to zeroes)
-        /// </summary>
-        /// <param name="layersCfg">Layers configuration</param>
-        public NeuralNetwork(LayerCfg[] layersCfg)
+        internal NeuralNetwork(LayerCfg[] layersCfg, bool fullyCopyLayersCfg)
         {
+            //Need init neurons weights size?
+            if (!fullyCopyLayersCfg)
+            {
+                layersCfg[0].NeuronsWeightsSize = layersCfg[0].NeuronsCount;
+                for (int i = 1; i < layersCfg.Length; i++)
+                    layersCfg[i].NeuronsWeightsSize = layersCfg[i - 1].NeuronsCount;
+            }
+
+            //Create instance of neural network
             fixed (LayerCfg* layerCfgArrPtr = &layersCfg[0])
             {
                 _instancePtr = Native.CreateInstance((IntPtr)layerCfgArrPtr, layersCfg.Length);
@@ -111,6 +116,13 @@ namespace Rio_Neural_Network
                     throw new ArgumentException("Can't initializate - \"NeuralNetwork\"!");
             }
         }
+
+        /// <summary>
+        /// Initializate neural network without initialization weights (weights initializate by default to zeroes)
+        /// </summary>
+        /// <param name="layersCfg">Layers configuration</param>
+        public NeuralNetwork(LayerCfg[] layersCfg) : this(layersCfg, false)
+        { }
 
         /// <summary>
         /// Initializate neural network with initialization all weights by desired configuration

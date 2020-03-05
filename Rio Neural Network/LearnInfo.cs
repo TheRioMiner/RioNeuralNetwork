@@ -1,6 +1,6 @@
 ﻿//RioNeuralNetwork: License information is available here - "https://github.com/TheRioMiner/RioNeuralNetwork/blob/master/LICENSE" or in file "LICENCE"
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
     public struct LearnInfo
     {

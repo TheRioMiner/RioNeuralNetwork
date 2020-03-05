@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Rio_Neural_Network
+namespace RioNeuralNetwork
 {
     [Flags]
     public enum FileFlags
