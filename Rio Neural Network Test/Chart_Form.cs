@@ -4,7 +4,7 @@ using System;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Windows.Forms.DataVisualization.Charting;
-using Rio_Neural_Network;
+using RioNeuralNetwork;
 
 namespace Rio_Neural_Network_Test
 {

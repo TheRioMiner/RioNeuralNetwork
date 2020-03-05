@@ -3,9 +3,9 @@
 using System;
 using System.IO;
 using System.Drawing;
-using System.Collections.Generic;
-using Rio_Neural_Network;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using RioNeuralNetwork;
 
 namespace Rio_Neural_Network_Test
 {
@@ -106,7 +106,7 @@ namespace Rio_Neural_Network_Test
             Retry:
 
                 //Load image
-                float[] imageData = Utils.ConvertBitmap32BppToFloatArrayGrayscale("test.png");
+                float[] imageData = NeuralUtils.ConvertBitmapToFloatArrayGrayscale("test.png");
 
                 //Forward propagate
                 var output = network.ForwardPropagate(imageData);
@@ -230,7 +230,7 @@ namespace Rio_Neural_Network_Test
                     using (var bitmap = new Bitmap(file.FullName))
                     using (var resizedBitmap = bitmap.ResizeImage(16, 16))
                     {
-                        var floatArray = Utils.ConvertBitmap32BppToFloatArrayGrayscale(resizedBitmap);
+                        var floatArray = NeuralUtils.ConvertBitmapToFloatArrayGrayscale(resizedBitmap);
                         var example = new Example(floatArray, desiredOutputs[index]);
                         examplesList.Add(example);
                     }
