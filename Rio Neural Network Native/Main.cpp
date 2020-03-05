@@ -95,24 +95,48 @@ extern "C"
     }
 
 
-    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+
+    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
     {
-        Utils_ConvertBitmap32BppToFloatArrayRGB(floatArrayPtr, bitmapStridePtr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmap32BppToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
     }
 
-    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmap24BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
     {
-        Utils_ConvertBitmap32BppToFloatArrayGrayscale(floatArrayPtr, bitmapStridePtr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmap24BppToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
     }
 
 
-    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
     {
-        Utils_ConvertFloatArrayRGBToBitmap32Bpp(floatArrayPtr, bitmapStridePtr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmap32BppToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
     }
 
-    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmap24BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
     {
-        Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(floatArrayPtr, bitmapStridePtr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmap24BppToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+    }
+
+
+
+    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    {
+        Utils_ConvertFloatArrayRGBToBitmap32Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+    }
+
+    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    {
+        Utils_ConvertFloatArrayRGBToBitmap24Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+    }
+
+
+    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    {
+        Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+    }
+
+    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    {
+        Utils_ConvertFloatArrayGrayscaleToBitmap24Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
     }
 }

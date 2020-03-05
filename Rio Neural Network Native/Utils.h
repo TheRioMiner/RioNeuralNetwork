@@ -13,6 +13,13 @@ struct PixelDataBGRA
     unsigned char A;
 };
 
+struct PixelDataBGR
+{
+    unsigned char B;
+    unsigned char G;
+    unsigned char R;
+};
+
 
 //AVX2 accelerated fast fill float array with desired value
 static void Utils_AVX2_FloatArrayFill(float* arrayPtr, int size, float value)
@@ -30,7 +37,8 @@ static void Utils_AVX2_FloatArrayFill(float* arrayPtr, int size, float value)
 }
 
 
-static void Utils_ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+
+static void Utils_ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
 {
     int i = 0;
     PixelDataBGRA px;
@@ -39,7 +47,7 @@ static void Utils_ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* 
         int yIndex = (y * bitmapWidth);
         for (int x = 0; x < bitmapWidth; x++)
         {
-            px = *((PixelDataBGRA*)bitmapStridePtr + x + yIndex);
+            px = *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex);
             *(floatArrayPtr + i++) = (px.R / 255.0f);
             *(floatArrayPtr + i++) = (px.G / 255.0f);
             *(floatArrayPtr + i++) = (px.B / 255.0f);
@@ -47,7 +55,25 @@ static void Utils_ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* 
     }
 }
 
-static void Utils_ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+static void Utils_ConvertBitmap24BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+{
+    int i = 0;
+    PixelDataBGR px;
+    for (int y = 0; y < bitmapHeight; y++)
+    {
+        int yIndex = (y * bitmapWidth);
+        for (int x = 0; x < bitmapWidth; x++)
+        {
+            px = *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex);
+            *(floatArrayPtr + i++) = (px.R / 255.0f);
+            *(floatArrayPtr + i++) = (px.G / 255.0f);
+            *(floatArrayPtr + i++) = (px.B / 255.0f);
+        }
+    }
+}
+
+
+static void Utils_ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
 {
     int i = 0;
     PixelDataBGRA px;
@@ -56,15 +82,29 @@ static void Utils_ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, 
         int yIndex = (y * bitmapWidth);
         for (int x = 0; x < bitmapWidth; x++)
         {
-            px = *((PixelDataBGRA*)bitmapStridePtr + x + yIndex);
-            float val = ((px.R + px.G + px.B) / 765.0f);
-            *(floatArrayPtr + i++) = val;
+            px = *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex);
+            *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
+        }
+    }
+}
+
+static void Utils_ConvertBitmap24BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+{
+    int i = 0;
+    PixelDataBGR px;
+    for (int y = 0; y < bitmapHeight; y++)
+    {
+        int yIndex = (y * bitmapWidth);
+        for (int x = 0; x < bitmapWidth; x++)
+        {
+            px = *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex);
+            *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
         }
     }
 }
 
 
-static void Utils_ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+static void Utils_ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
 {
     int i = 0;
     float val = 0.0f;
@@ -77,58 +117,97 @@ static void Utils_ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* 
         {
             //RED
             {
-                val = floatArrayPtr[i] * 255.0f;
-
-                //Limit
-                if (val > 255.0f)
-                    val = 255.0f;
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
                 if (val < 0.0f)
                     val = 0.0f;
-
-                px.R = (unsigned char)val; //Set
-
-                i++; //Increment index in float array
+                px.R = (unsigned char)(val * 255.0f);
+                i++;
             }
 
             //GREEN
             {
-                val = floatArrayPtr[i] * 255.0f;
-
-                //Limit
-                if (val > 255.0f)
-                    val = 255.0f;
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
                 if (val < 0.0f)
                     val = 0.0f;
-
-                px.G = (unsigned char)val; //Set
-
-                i++; //Increment index in float array
+                px.G = (unsigned char)(val * 255.0f);
+                i++;
             }
 
             //BLUE
             {
-                val = floatArrayPtr[i] * 255.0f;
-
-                //Limit
-                if (val > 255.0f)
-                    val = 255.0f;
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
                 if (val < 0.0f)
                     val = 0.0f;
-
-                px.B = (unsigned char)val; //Set
-
-                i++; //Increment index in float array
+                px.B = (unsigned char)(val * 255.0f);
+                i++;
             }
 
             //Set pixel
-            *((PixelDataBGRA*)bitmapStridePtr + x + yIndex) = px;
+            *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex) = px;
         }
     }
 }
 
-static void Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, void* bitmapStridePtr, int bitmapWidth, int bitmapHeight)
+static void Utils_ConvertFloatArrayRGBToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
 {
     int i = 0;
+    float val = 0.0f;
+    PixelDataBGR px;
+    for (int y = 0; y < bitmapHeight; y++)
+    {
+        int yIndex = (y * bitmapWidth);
+        for (int x = 0; x < bitmapWidth; x++)
+        {
+            //RED
+            {
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
+                if (val < 0.0f)
+                    val = 0.0f;
+                px.R = (unsigned char)(val * 255.0f);
+                i++;
+            }
+
+            //GREEN
+            {
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
+                if (val < 0.0f)
+                    val = 0.0f;
+                px.G = (unsigned char)(val * 255.0f);
+                i++;
+            }
+
+            //BLUE
+            {
+                val = floatArrayPtr[i];
+                if (val > 1.0f)
+                    val = 1.0f;
+                if (val < 0.0f)
+                    val = 0.0f;
+                px.B = (unsigned char)(val * 255.0f);
+                i++;
+            }
+
+            //Set pixel
+            *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex) = px;
+        }
+    }
+}
+
+
+static void Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+{
+    int i = 0;
+    float val = 0.0f;
     PixelDataBGRA px;
     px.A = 255;
     for (int y = 0; y < bitmapHeight; y++)
@@ -138,23 +217,48 @@ static void Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, 
         {
             int i = (yIndex + x);
 
-            float val = floatArrayPtr[i];
-
-            //Limit
+            val = floatArrayPtr[i];
             if (val > 1.0f)
                 val = 1.0f;
             if (val < 0.0f)
                 val = 0.0f;
 
-            //Normalize to byte range
-            val *= 255.0f;
+            val *= 255.0f; 
 
-            //Write pixeldata
             unsigned char result = (unsigned char)val;
             px.R = result;
             px.G = result;
             px.B = result;
-            *((PixelDataBGRA*)bitmapStridePtr + x + yIndex) = px;
+            *((PixelDataBGRA*)bitmapScan0Ptr + i) = px;
+        }
+    }
+}
+
+static void Utils_ConvertFloatArrayGrayscaleToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+{
+    int i = 0;
+    float val = 0.0f;
+    PixelDataBGR px;
+    for (int y = 0; y < bitmapHeight; y++)
+    {
+        int yIndex = (y * bitmapWidth);
+        for (int x = 0; x < bitmapWidth; x++)
+        {
+            int i = (yIndex + x);
+
+            val = floatArrayPtr[i];
+            if (val > 1.0f)
+                val = 1.0f;
+            if (val < 0.0f)
+                val = 0.0f;
+
+            val *= 255.0f;
+
+            unsigned char result = (unsigned char)val;
+            px.R = result;
+            px.G = result;
+            px.B = result;
+            *((PixelDataBGR*)bitmapScan0Ptr + i) = px;
         }
     }
 }

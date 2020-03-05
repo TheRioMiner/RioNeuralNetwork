@@ -20,18 +20,18 @@ Layer::Layer()
 	ActivationType = ActivationTypes::INVALID;
 }
 
-Layer::Layer(int neuronsCount, int neuronsWeigthsSize, ActivationTypes activationType, float layerLearnRate)
+Layer::Layer(LayerCfg layerCfg)
 {
 	//Set neurons count and neurons weights size
-	NeuronsCount = neuronsCount;
-	NeuronsWeightsSize = neuronsWeigthsSize + 1/*bias*/;
+	NeuronsCount = layerCfg.NeuronsCount;
+	NeuronsWeightsSize = layerCfg.NeuronsWeightsSize + 1/*bias*/;
 
 	//Set layer learn rate
-	LayerLearnRate = layerLearnRate;
+	LayerLearnRate = layerCfg.LayerLearnRate;
 
 	//Init weights
-	Weights = new float* [NeuronsCount];
-	WeightsMomentum = new float* [NeuronsCount];
+	Weights = new float*[NeuronsCount];
+	WeightsMomentum = new float*[NeuronsCount];
 	for (int i = 0; i < NeuronsCount; i++)
 	{
 		Weights[i] = (float*)_mm_malloc(NeuronsWeightsSize * sizeof(float), sizeof(__m256));
@@ -53,30 +53,28 @@ Layer::Layer(int neuronsCount, int neuronsWeigthsSize, ActivationTypes activatio
 	}
 
 	//Init activation
-	ActivationType = activationType;
+	ActivationType = layerCfg.ActivationType;
 	switch (ActivationType)
 	{
-	case ActivationTypes::SIGMOID:
-		ActivationFunc = Activations::Sigmoid;
-		break;
-	case ActivationTypes::TANH:
-		ActivationFunc = Activations::Tanh;
-		break;
-	case ActivationTypes::RELU:
-		ActivationFunc = Activations::ReLU;
-		break;
-	case ActivationTypes::LRELU:
-		ActivationFunc = Activations::LReLU;
-		break;
+		case ActivationTypes::SIGMOID:
+			ActivationFunc = Activations::Sigmoid;
+			break;
+		case ActivationTypes::TANH:
+			ActivationFunc = Activations::Tanh;
+			break;
+		case ActivationTypes::RELU:
+			ActivationFunc = Activations::ReLU;
+			break;
+		case ActivationTypes::LRELU:
+			ActivationFunc = Activations::LReLU;
+			break;
 
-	default:
-		throw "Invalid activation type!";
+		default:
+			throw "Invalid activation type!";
 	}
 }
 
-Layer::Layer(int neuronsCount, int neuronsWeigthsSize) : Layer(neuronsCount, neuronsWeigthsSize, ActivationTypes::SIGMOID, 1.0f)
-{ }
-
+//Destructor
 Layer::~Layer()
 {
 	//Delete weights and weights momentum arrays
@@ -105,14 +103,14 @@ Layer::~Layer()
 		Errors = nullptr;
 	}
 
-	//Reset neurons count and weights size
+	//Discard neurons count and weights size
 	NeuronsCount = 0;
 	NeuronsWeightsSize = 0;
 
-	//Reset layer learn rate
+	//Discard layer learn rate
 	LayerLearnRate = 0.0f;
 
-	//Reset activation
+	//Discard activation
 	ActivationType = ActivationTypes::INVALID;
 	ActivationFunc = nullptr;
 }

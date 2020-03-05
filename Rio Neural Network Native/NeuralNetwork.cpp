@@ -11,23 +11,24 @@ NeuralNetwork::NeuralNetwork(LayerCfg* layersCfg, int layersCount)
     //Init layers
     Layers = new Layer*[LayersCount];
     for (int i = 0; i < LayersCount; i++)
-    {
-        auto l = layersCfg[i];
-        if (i > 0)
-            Layers[i] = new Layer(l.NeuronsCount, layersCfg[i - 1].NeuronsCount, l.ActivationType, l.LayerLearnRate);
-        else
-            Layers[i] = new Layer(l.NeuronsCount, l.NeuronsCount, l.ActivationType, l.LayerLearnRate);
-    }
+        Layers[i] = new Layer(layersCfg[i]);
 }
 
 NeuralNetwork::~NeuralNetwork()
 {
     //Dispose layers
     for (int i = 0; i < LayersCount; i++)
+    {
         delete Layers[i];
-
+        Layers[i] = nullptr;
+    }
+    
     //Dispose layers array
     delete[] Layers;
+    Layers = nullptr;
+
+    //Discard layers count
+    LayersCount = 0;
 }
 
 
@@ -35,7 +36,7 @@ NeuralNetwork::~NeuralNetwork()
 float NeuralNetwork::Activate(float* weights, float* inputs, int size)
 {
     int n = (size - 1);
-    float a = weights[n];/*bias?*/;
+    float a = weights[n];/*bias*/;
 
     //Main cycle
     int i = 0;

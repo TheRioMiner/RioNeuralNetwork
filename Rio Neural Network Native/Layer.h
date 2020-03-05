@@ -7,6 +7,7 @@ using namespace std;
 
 #include "Utils.h"
 #include "Activations.h"
+#include "LayerCfg.h"
 
 
 struct Layer
@@ -23,12 +24,9 @@ public:
 	Activation* ActivationFunc;
 	
 
-
 	Layer();
 
-	Layer(int neuronsCount, int neuronsWeigthsSize, ActivationTypes activationType, float layerLearnRate);
-
-	Layer(int neuronsCount, int neuronsWeigthsSize);
+	Layer(LayerCfg layerCfg);
 
 	~Layer();
 };
