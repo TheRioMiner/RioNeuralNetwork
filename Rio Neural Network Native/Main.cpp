@@ -20,7 +20,7 @@ extern "C"
 
 
 
-    __declspec(dllexport) float* ForwardPropagate_Ptr(NeuralNetwork* instance, float* inputPtr, int inputSize)
+    __declspec(dllexport) float* ForwardPropagate_Ptr(NeuralNetwork* instance, float* inputPtr, int inputSize, bool setInputToFirstLayerOutput)
     {
         if (!instance)
             return nullptr; //Null pointer to instance
@@ -29,13 +29,13 @@ extern "C"
             return nullptr; //Invalid input array
 
         //Forward propagate!
-        float* resultPtr = instance->ForwardPropagate(inputPtr);
+        float* resultPtr = instance->ForwardPropagate(inputPtr, setInputToFirstLayerOutput);
 
         //Return result (pointer to last layer neuron outputs)
         return resultPtr;
     }
 
-    __declspec(dllexport) int ForwardPropagate_Cpy(NeuralNetwork* instance, float* inputArrayPtr, int inputArraySize, float* outputArrayPtr)
+    __declspec(dllexport) int ForwardPropagate_Cpy(NeuralNetwork* instance, float* inputArrayPtr, int inputArraySize, float* outputArrayPtr, bool setInputToFirstLayerOutput)
     {
         if (!instance)
             return false; //Null pointer to instance
@@ -47,7 +47,7 @@ extern "C"
             return false; //Invalid output arrray pointer
 
         //Forward propagate!
-        float* resultPtr = instance->ForwardPropagate(inputArrayPtr);
+        float* resultPtr = instance->ForwardPropagate(inputArrayPtr, setInputToFirstLayerOutput);
 
         //Copy results to output array
         int outputNeuronsCount = instance->Layers[instance->LayersCount - 1]->NeuronsCount;
@@ -96,47 +96,37 @@ extern "C"
 
 
 
-    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertBitmap32BppToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmapToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
     }
 
-    __declspec(dllexport) void ConvertBitmap24BppToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
     {
-        Utils_ConvertBitmap24BppToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        YUVICfg yuviCfg = YUVICfg(yuviStep);
+        Utils_ConvertBitmapToFloatArrayYUVI(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
     }
 
-
-    __declspec(dllexport) void ConvertBitmap32BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertBitmap32BppToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
-    }
-
-    __declspec(dllexport) void ConvertBitmap24BppToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
-    {
-        Utils_ConvertBitmap24BppToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        Utils_ConvertBitmapToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
     }
 
 
 
-    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertFloatArrayRGBToBitmap32Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        Utils_ConvertFloatArrayRGBToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
     }
 
-    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
     {
-        Utils_ConvertFloatArrayRGBToBitmap24Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        YUVICfg yuviCfg = YUVICfg(yuviStep);
+        Utils_ConvertFloatArrayYUVIToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
     }
 
-
-    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap32Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
+    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertFloatArrayGrayscaleToBitmap32Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
-    }
-
-    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap24Bpp(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight)
-    {
-        Utils_ConvertFloatArrayGrayscaleToBitmap24Bpp(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight);
+        Utils_ConvertFloatArrayGrayscaleToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
     }
 }

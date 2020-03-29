@@ -172,6 +172,7 @@
     <ClInclude Include="LayerCfg.h" />
     <ClInclude Include="NeuralNetwork.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="YUVICfg.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Activations.cpp" />

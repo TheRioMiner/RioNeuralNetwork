@@ -22,7 +22,7 @@ public:
     ~NeuralNetwork();
 
 
-    float* ForwardPropagate(float* input);
+    float* ForwardPropagate(float* input, bool setInputToFirstLayerOutput);
 
     void BackwardPropagateError(float* expected);
 

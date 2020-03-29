@@ -71,17 +71,25 @@ float NeuralNetwork::Activate(float* weights, float* inputs, int size)
     return a;
 }
 
-float* NeuralNetwork::ForwardPropagate(float* inputPtr)
+float* NeuralNetwork::ForwardPropagate(float* inputPtr, bool setInputToFirstLayerOutput)
 {
-    //Propagate first layer
     Layer* pFirstLayer = Layers[0];
-    for (int j = 0; j < pFirstLayer->NeuronsCount; j++)
+    if (setInputToFirstLayerOutput)
     {
-        //Activate
-        float activation = Activate(pFirstLayer->Weights[j], inputPtr, pFirstLayer->NeuronsWeightsSize);
+        //Copy input data to first layer output
+        memcpy(pFirstLayer->Outputs, inputPtr, pFirstLayer->NeuronsCount * sizeof(float));
+    }
+    else 
+    {
+        //Propagate first layer
+        for (int j = 0; j < pFirstLayer->NeuronsCount; j++)
+        {
+            //Activate
+            float activation = Activate(pFirstLayer->Weights[j], inputPtr, pFirstLayer->NeuronsWeightsSize);
 
-        //And transfer to output
-        pFirstLayer->Outputs[j] = pFirstLayer->ActivationFunc->Transfer(activation);
+            //And transfer to output
+            pFirstLayer->Outputs[j] = pFirstLayer->ActivationFunc->Transfer(activation);
+        }
     }
 
     //Propagate to another layers
