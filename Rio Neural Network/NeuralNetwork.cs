@@ -215,7 +215,7 @@ namespace RioNeuralNetwork
 
 
 
-        public float* ForwardPropagate(float* inputArrayPtr, int inputArraySize)
+        public float* ForwardPropagate(float* inputArrayPtr, int inputArraySize, bool setInputToFirstLayerOutput = false)
         {
             //Check pointer to input array
             if (inputArrayPtr == (float*)0)
@@ -229,10 +229,10 @@ namespace RioNeuralNetwork
                 throw new ArgumentOutOfRangeException("inputArraySize", "Input array size too small for neural network input!");
 
             //Forward propagate!
-            return Native.ForwardPropagate_Ptr(_instancePtr, inputArrayPtr, inputNeuronsCount);
+            return Native.ForwardPropagate_Ptr(_instancePtr, inputArrayPtr, inputNeuronsCount, setInputToFirstLayerOutput);
         }
 
-        public float[] ForwardPropagate(float[] input)
+        public float[] ForwardPropagate(float[] input, bool setInputToFirstLayerOutput = false)
         {
             //Input not null?
             if (input == null)
@@ -255,7 +255,7 @@ namespace RioNeuralNetwork
             fixed (float* outputPtr = &output[0])
             {
                 //Forward propagate!
-                bool result = Native.ForwardPropagate_Cpy(_instancePtr, inputPtr, inputNeuronsCount, outputPtr);
+                bool result = Native.ForwardPropagate_Cpy(_instancePtr, inputPtr, inputNeuronsCount, outputPtr, setInputToFirstLayerOutput);
                 if (!result)
                     return null; //Something went wrong!
             }
@@ -473,7 +473,7 @@ namespace RioNeuralNetwork
                             if (readWeights || readWeightsMomentum)
                             {
                                 float* weightsPtr = layer.Weights[i];
-                                float* weightsMomentumPtr = layer.Weights[i];
+                                float* weightsMomentumPtr = layer.WeightsMomentum[i];
                                 for (int j = 0; j < layer.NeuronsWeightsSize; j++)
                                 {
                                     if (readWeights)

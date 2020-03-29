@@ -69,11 +69,11 @@ namespace RioNeuralNetwork
 
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate float* ForwardPropagate_PtrDelegate(IntPtr instance, float* inputArrayPtr, int inputArraySize);
+        public delegate float* ForwardPropagate_PtrDelegate(IntPtr instance, float* inputArrayPtr, int inputArraySize, bool setInputToFirstLayerOutput);
         public static ForwardPropagate_PtrDelegate ForwardPropagate_Ptr = LoadDelegate<ForwardPropagate_PtrDelegate>("ForwardPropagate_Ptr");
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate bool ForwardPropagate_CpyDelegate(IntPtr instance, float* inputArrayPtr, int inputArraySize, float* outputArrayPtr);
+        public delegate bool ForwardPropagate_CpyDelegate(IntPtr instance, float* inputArrayPtr, int inputArraySize, float* outputArrayPtr, bool setInputToFirstLayerOutput);
         public static ForwardPropagate_CpyDelegate ForwardPropagate_Cpy = LoadDelegate<ForwardPropagate_CpyDelegate>("ForwardPropagate_Cpy");
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -95,42 +95,34 @@ namespace RioNeuralNetwork
 
         //ConvertBitmapToFloatArray
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertBitmap32BppToFloatArrayRGBDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertBitmap32BppToFloatArrayRGBDelegate ConvertBitmap32BppToFloatArrayRGB = LoadDelegate<ConvertBitmap32BppToFloatArrayRGBDelegate>("ConvertBitmap32BppToFloatArrayRGB");
+        public delegate void ConvertBitmapToFloatArrayRGBDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp);
+        public static ConvertBitmapToFloatArrayRGBDelegate ConvertBitmapToFloatArrayRGB = LoadDelegate<ConvertBitmapToFloatArrayRGBDelegate>("ConvertBitmapToFloatArrayRGB");
 
+        //ConvertBitmapToFloatArrayYUVI
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertBitmap24BppToFloatArrayRGBDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertBitmap24BppToFloatArrayRGBDelegate ConvertBitmap24BppToFloatArrayRGB = LoadDelegate<ConvertBitmap24BppToFloatArrayRGBDelegate>("ConvertBitmap24BppToFloatArrayRGB");
-
+        public delegate void ConvertBitmapToFloatArrayYUVIDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, byte yuviStep);
+        public static ConvertBitmapToFloatArrayYUVIDelegate ConvertBitmapToFloatArrayYUVI = LoadDelegate<ConvertBitmapToFloatArrayYUVIDelegate>("ConvertBitmapToFloatArrayYUVI");
 
         //ConvertBitmapToFloatArrayGrayscale
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertBitmap32BppToFloatArrayGrayscaleDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertBitmap32BppToFloatArrayGrayscaleDelegate ConvertBitmap32BppToFloatArrayGrayscale = LoadDelegate<ConvertBitmap32BppToFloatArrayGrayscaleDelegate>("ConvertBitmap32BppToFloatArrayGrayscale");
+        public delegate void ConvertBitmapToFloatArrayGrayscaleDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp);
+        public static ConvertBitmapToFloatArrayGrayscaleDelegate ConvertBitmapToFloatArrayGrayscale = LoadDelegate<ConvertBitmapToFloatArrayGrayscaleDelegate>("ConvertBitmapToFloatArrayGrayscale");
        
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertBitmap24BppToFloatArrayGrayscaleDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertBitmap24BppToFloatArrayGrayscaleDelegate ConvertBitmap24BppToFloatArrayGrayscale = LoadDelegate<ConvertBitmap24BppToFloatArrayGrayscaleDelegate>("ConvertBitmap24BppToFloatArrayGrayscale");
-
 
 
         //ConvertFloatArrayRGBToBitmap
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertFloatArrayRGBToBitmap32BppDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertFloatArrayRGBToBitmap32BppDelegate ConvertFloatArrayRGBToBitmap32Bpp = LoadDelegate<ConvertFloatArrayRGBToBitmap32BppDelegate>("ConvertFloatArrayRGBToBitmap32Bpp");
-        
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertFloatArrayRGBToBitmap24BppDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertFloatArrayRGBToBitmap24BppDelegate ConvertFloatArrayRGBToBitmap24Bpp = LoadDelegate<ConvertFloatArrayRGBToBitmap24BppDelegate>("ConvertFloatArrayRGBToBitmap24Bpp");
+        public delegate void ConvertFloatArrayRGBToBitmapDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp);
+        public static ConvertFloatArrayRGBToBitmapDelegate ConvertFloatArrayRGBToBitmap = LoadDelegate<ConvertFloatArrayRGBToBitmapDelegate>("ConvertFloatArrayRGBToBitmap");
 
+        //ConvertFloatArrayYUVIToBitmap
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void ConvertFloatArrayYUVIToBitmapDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, byte yuviStep);
+        public static ConvertFloatArrayYUVIToBitmapDelegate ConvertFloatArrayYUVIToBitmap = LoadDelegate<ConvertFloatArrayYUVIToBitmapDelegate>("ConvertFloatArrayYUVIToBitmap");
 
         //ConvertFloatArrayGrayscaleToBitmap
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertFloatArrayGrayscaleToBitmap32BppDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertFloatArrayGrayscaleToBitmap32BppDelegate ConvertFloatArrayGrayscaleToBitmap32Bpp = LoadDelegate<ConvertFloatArrayGrayscaleToBitmap32BppDelegate>("ConvertFloatArrayGrayscaleToBitmap32Bpp");
-       
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void ConvertFloatArrayGrayscaleToBitmap24BppDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight);
-        public static ConvertFloatArrayGrayscaleToBitmap24BppDelegate ConvertFloatArrayGrayscaleToBitmap24Bpp = LoadDelegate<ConvertFloatArrayGrayscaleToBitmap24BppDelegate>("ConvertFloatArrayGrayscaleToBitmap24Bpp");
+        public delegate void ConvertFloatArrayGrayscaleToBitmapDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp);
+        public static ConvertFloatArrayGrayscaleToBitmapDelegate ConvertFloatArrayGrayscaleToBitmap = LoadDelegate<ConvertFloatArrayGrayscaleToBitmapDelegate>("ConvertFloatArrayGrayscaleToBitmap");
     }
 }

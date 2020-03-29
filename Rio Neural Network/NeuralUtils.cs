@@ -47,11 +47,16 @@ namespace RioNeuralNetwork
 				if (newLayer.NeuronsCount != origLayer.NeuronsCount)
 					throw new Exception("Layers neurons count mismatch!");
 
-				//Copy weights and another layers data
-				Native.memcpy(newLayer.Weights, origLayer.Weights, (UIntPtr)newLayer.NeuronsWeightsSize);
-				Native.memcpy(newLayer.WeightsMomentum, origLayer.WeightsMomentum, (UIntPtr)newLayer.NeuronsWeightsSize);
-				Native.memcpy(newLayer.Outputs, origLayer.Outputs, (UIntPtr)newLayer.NeuronsCount);
-				Native.memcpy(newLayer.Errors, origLayer.Errors, (UIntPtr)newLayer.NeuronsCount);
+				//Copy weights data
+				for (int i = 0; i < newLayer.NeuronsCount; i++)
+				{
+					Native.memcpy(newLayer.Weights[i], origLayer.Weights[i], (UIntPtr)(newLayer.NeuronsWeightsSize * sizeof(float)));
+					Native.memcpy(newLayer.WeightsMomentum[i], origLayer.WeightsMomentum[i], (UIntPtr)(newLayer.NeuronsWeightsSize * sizeof(float)));
+				}
+
+				//Copy output and errors data
+				Native.memcpy(newLayer.Outputs, origLayer.Outputs, (UIntPtr)(newLayer.NeuronsCount * sizeof(float)));
+				Native.memcpy(newLayer.Errors, origLayer.Errors, (UIntPtr)(newLayer.NeuronsCount * sizeof(float)));
 			}
 
 			//Return new network!
@@ -89,10 +94,7 @@ namespace RioNeuralNetwork
 				//Lock the bitmap's bits
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
 				{
-					if (is32bpp)
-						Native.ConvertBitmap32BppToFloatArrayRGB(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
-					else
-						Native.ConvertBitmap24BppToFloatArrayRGB(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
+					Native.ConvertBitmapToFloatArrayRGB(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, is32bpp);
 				}
 				//Unlock bitmap
 				bitmap.UnlockBits(bitmapData);
@@ -107,6 +109,32 @@ namespace RioNeuralNetwork
 		}
 
 
+		public static unsafe float[] ConvertBitmapToFloatArrayYUVI(Bitmap bitmap, byte yuviStep = 80)
+		{
+			//Check and get bitness
+			CheckBitmapBitness(bitmap, out bool is32bpp);
+
+			float[] resultArray = new float[bitmap.Width * bitmap.Height * 2];
+			fixed (float* resultArrayPtr = &resultArray[0])
+			{
+				//Lock the bitmap's bits
+				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
+				{
+					Native.ConvertBitmapToFloatArrayYUVI(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, is32bpp, yuviStep);
+				}
+				//Unlock bitmap
+				bitmap.UnlockBits(bitmapData);
+			}
+			return resultArray;
+		}
+
+		public static float[] ConvertBitmapToFloatArrayYUVI(string fileName, byte yuviStep = 80)
+		{
+			using (var bitmap = new Bitmap(fileName))
+				return ConvertBitmapToFloatArrayYUVI(bitmap, yuviStep);
+		}
+
+
 		public static unsafe float[] ConvertBitmapToFloatArrayGrayscale(Bitmap bitmap)
 		{
 			//Check and get bitness
@@ -118,10 +146,7 @@ namespace RioNeuralNetwork
 				//Lock the bitmap's bits
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, bitmap.PixelFormat);
 				{
-					if (is32bpp)
-						Native.ConvertBitmap32BppToFloatArrayGrayscale(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
-					else
-						Native.ConvertBitmap24BppToFloatArrayGrayscale(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
+					Native.ConvertBitmapToFloatArrayGrayscale(resultArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, is32bpp);
 				}
 				//Unlock bitmap
 				bitmap.UnlockBits(bitmapData);
@@ -148,10 +173,26 @@ namespace RioNeuralNetwork
 				//Lock the bitmap's bits
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
 				{
-					if (bitmap32bpp)
-						Native.ConvertFloatArrayRGBToBitmap32Bpp(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
-					else
-						Native.ConvertFloatArrayRGBToBitmap24Bpp(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
+					Native.ConvertFloatArrayRGBToBitmap(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, bitmap32bpp);
+				}
+				//Unlock bitmap
+				bitmap.UnlockBits(bitmapData);
+			}
+			return bitmap;
+		}
+
+		public static unsafe Bitmap ConvertFloatArrayYUVIToBitmap(float[] imageDataArray, int width, int height, byte yuviStep = 80, bool bitmap32bpp = false)
+		{
+			if ((width * height * 2) != imageDataArray.Length)
+				throw new ArgumentOutOfRangeException("imageDataArray", "ImageDataArray lenght invalid!");
+
+			var bitmap = new Bitmap(width, height, bitmap32bpp ? PixelFormat.Format32bppRgb : PixelFormat.Format24bppRgb);
+			fixed (float* imageDataArrayPtr = &imageDataArray[0])
+			{
+				//Lock the bitmap's bits
+				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
+				{
+					Native.ConvertFloatArrayYUVIToBitmap(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, bitmap32bpp, yuviStep);
 				}
 				//Unlock bitmap
 				bitmap.UnlockBits(bitmapData);
@@ -170,10 +211,7 @@ namespace RioNeuralNetwork
 				//Lock the bitmap's bits
 				var bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
 				{
-					if (bitmap32bpp)
-						Native.ConvertFloatArrayGrayscaleToBitmap32Bpp(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
-					else
-						Native.ConvertFloatArrayGrayscaleToBitmap24Bpp(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height);
+					Native.ConvertFloatArrayGrayscaleToBitmap(imageDataArrayPtr, bitmapData.Scan0, bitmap.Width, bitmap.Height, bitmap32bpp);
 				}
 				//Unlock bitmap
 				bitmap.UnlockBits(bitmapData);
