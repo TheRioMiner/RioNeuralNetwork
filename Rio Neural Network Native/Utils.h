@@ -6,6 +6,8 @@
 #include "YUVICfg.h"
 
 
+#pragma pack(push, 1)
+
 struct PixelDataBGRA
 {
     unsigned char B;
@@ -20,6 +22,8 @@ struct PixelDataBGR
     unsigned char G;
     unsigned char R;
 };
+
+#pragma pack(pop)
 
 
 //AVX2 accelerated fast fill float array with desired value
@@ -39,24 +43,25 @@ static void Utils_AVX2_FloatArrayFill(float* arrayPtr, int size, float value)
 
 
 
-static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
             if (is32bpp)
             {
-                PixelDataBGRA px = *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 *(floatArrayPtr + i++) = (px.R / 255.0f);
                 *(floatArrayPtr + i++) = (px.G / 255.0f);
                 *(floatArrayPtr + i++) = (px.B / 255.0f);
             }
             else 
             {
-                PixelDataBGR px = *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 *(floatArrayPtr + i++) = (px.R / 255.0f);
                 *(floatArrayPtr + i++) = (px.G / 255.0f);
                 *(floatArrayPtr + i++) = (px.B / 255.0f);
@@ -65,17 +70,18 @@ static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, void* bitma
     }
 }
 
-static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
+static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
 {
     int i = 0;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
             if (is32bpp)
             {
-                PixelDataBGRA px = *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 int U = (int)((-0.148f * px.R - 0.291f * px.G + 0.439f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int V = (int)((0.439f * px.R - 0.368f * px.G - 0.071f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int index = (U + (V * yuviCfg->Step));
@@ -84,7 +90,7 @@ static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, void* bitm
             }
             else
             {
-                PixelDataBGR px = *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 int U = (int)((-0.148f * px.R - 0.291f * px.G + 0.439f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int V = (int)((0.439f * px.R - 0.368f * px.G - 0.071f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int index = (U + (V * yuviCfg->Step));
@@ -95,22 +101,23 @@ static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, void* bitm
     }
 }
 
-static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
             if (is32bpp)
             {
-                PixelDataBGRA px = *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
             }
             else
             {
-                PixelDataBGR px = *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex);
+                PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
             }
         }
@@ -119,13 +126,14 @@ static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, void*
 
 
 
-static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
     float val = 0.0f;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
             if (is32bpp)
@@ -152,7 +160,7 @@ static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, void* bitma
                 px.B = (unsigned char)(val * 255.0f);
 
                 //Set pixel
-                *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex) = px;
+                *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex)) = px;
             }
             else 
             {
@@ -177,18 +185,19 @@ static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, void* bitma
                 px.B = (unsigned char)(val * 255.0f);
 
                 //Set pixel
-                *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex) = px;
+                *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex)) = px;
             }
         }
     }
 }
 
-static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
+static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
 {
     int i = 0;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
             //Get Y and UVI
@@ -226,7 +235,7 @@ static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, void* bitm
                 px.R = (unsigned char)R;
                 px.G = (unsigned char)G;
                 px.B = (unsigned char)B;
-                *((PixelDataBGRA*)bitmapScan0Ptr + x + yIndex) = px;
+                *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex)) = px;
             }
             else 
             {
@@ -234,23 +243,23 @@ static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, void* bitm
                 px.R = (unsigned char)R;
                 px.G = (unsigned char)G;
                 px.B = (unsigned char)B;
-                *((PixelDataBGR*)bitmapScan0Ptr + x + yIndex) = px;
+                *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex)) = px;
             }
         }
     }
 }
 
-static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
+    int i = 0;
     float val = 0.0f;
+    int rowSize = abs(bitmapStride);
     for (int y = 0; y < bitmapHeight; y++)
     {
-        int yIndex = (y * bitmapWidth);
+        int yIndex = (y * rowSize);
         for (int x = 0; x < bitmapWidth; x++)
         {
-            int i = (yIndex + x);
-
-            val = floatArrayPtr[i];
+            val = floatArrayPtr[i++];
             if (val > 1.0f) val = 1.0f;
             if (val < 0.0f) val = 0.0f;
 
@@ -264,7 +273,7 @@ static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, void*
                 px.R = result;
                 px.G = result;
                 px.B = result;
-                *((PixelDataBGRA*)bitmapScan0Ptr + i) = px;
+                *(PixelDataBGRA*)(bitmapScan0Ptr + (x * 4 + yIndex)) = px;
             }
             else 
             { 
@@ -272,7 +281,7 @@ static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, void*
                 px.R = result;
                 px.G = result;
                 px.B = result;
-                *((PixelDataBGR*)bitmapScan0Ptr + i) = px;
+                *(PixelDataBGR*)(bitmapScan0Ptr + (x * 3 + yIndex)) = px;
             }
         }
     }

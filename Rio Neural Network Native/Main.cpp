@@ -96,37 +96,37 @@ extern "C"
 
 
 
-    __declspec(dllexport) void ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertBitmapToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
+        Utils_ConvertBitmapToFloatArrayRGB(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp);
     }
 
-    __declspec(dllexport) void ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
     {
         YUVICfg yuviCfg = YUVICfg(yuviStep);
-        Utils_ConvertBitmapToFloatArrayYUVI(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
+        Utils_ConvertBitmapToFloatArrayYUVI(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
     }
 
-    __declspec(dllexport) void ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+    __declspec(dllexport) void ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertBitmapToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
+        Utils_ConvertBitmapToFloatArrayGrayscale(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp);
     }
 
 
 
-    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+    __declspec(dllexport) void ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertFloatArrayRGBToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
+        Utils_ConvertFloatArrayRGBToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp);
     }
 
-    __declspec(dllexport) void ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
+    __declspec(dllexport) void ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, unsigned char yuviStep)
     {
         YUVICfg yuviCfg = YUVICfg(yuviStep);
-        Utils_ConvertFloatArrayYUVIToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
+        Utils_ConvertFloatArrayYUVIToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp, &yuviCfg);
     }
 
-    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, void* bitmapScan0Ptr, int bitmapWidth, int bitmapHeight, bool is32bpp)
+    __declspec(dllexport) void ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {
-        Utils_ConvertFloatArrayGrayscaleToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapWidth, bitmapHeight, is32bpp);
+        Utils_ConvertFloatArrayGrayscaleToBitmap(floatArrayPtr, bitmapScan0Ptr, bitmapStride, bitmapWidth, bitmapHeight, is32bpp);
     }
 }
