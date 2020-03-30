@@ -59,15 +59,15 @@ namespace Rio_Neural_Network_Test
                 Console.WriteLine($"{testDataset.Count} test samples loaded\n");
 
                 //Create neural network
-                var network = new NeuralNetwork(layersCfg, new WeightsFillInfo(0.80f), seed);
+                var network = new NeuralNetwork(layersCfg, new WeightsFillInfo(0.75f), seed);
 
                 //Load neural network from file to resume training
                 //var network = NeuralNetwork.LoadFromBinary("trained.bin");
 
                 //Set learn rate and learn until error
-                network.LearnInfo.LearnRate = 0.0080f;
-                network.LearnInfo.LearnUntilError = 16.5f;
-                network.LearnInfo.Alpha = 10f;
+                network.LearnInfo.LearnRate = 0.0090f;
+                network.LearnInfo.LearnUntilError = 18.0f;
+                network.LearnInfo.Alpha = 6f;
 
                 //Train!
                 Train(network, seed);

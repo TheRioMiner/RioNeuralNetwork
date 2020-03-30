@@ -57,12 +57,6 @@
     <Compile Include="Extensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Rio Neural Network\Rio Neural Network.csproj">
-      <Project>{dfbbd64c-6593-4538-8a98-2d283a8e7cf9}</Project>
-      <Name>Rio Neural Network</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Chart_Form.resx">
       <DependentUpon>Chart_Form.cs</DependentUpon>
     </EmbeddedResource>
@@ -74,6 +68,12 @@
     <Content Include="RioNeuralNetworkNative64.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rio Neural Network\Rio Neural Network.csproj">
+      <Project>{dfbbd64c-6593-4538-8a98-2d283a8e7cf9}</Project>
+      <Name>Rio Neural Network</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
