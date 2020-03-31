@@ -95,6 +95,11 @@ extern "C"
     }
 
 
+    __declspec(dllexport) float MeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+    {
+        return Utils_MeanSquaredError(etalonPtr, predictedPtr, size);
+    }
+
 
     __declspec(dllexport) void ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
     {

@@ -42,6 +42,44 @@ static void Utils_AVX2_FloatArrayFill(float* arrayPtr, int size, float value)
 }
 
 
+static float Utils_MeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+{
+    float sum = 0.0f;
+
+    //Main cycle
+    int i = 0;
+    int mainCount = (size & -8);
+    __m256 sum256 = _mm256_setzero_ps();
+    for (; i < mainCount; i += 8)
+    {
+        __m256 etal = _mm256_load_ps(etalonPtr + i);
+        __m256 pred = _mm256_load_ps(predictedPtr + i);
+        etal = _mm256_sub_ps(etal, pred); //Get diff and store in etal
+        etal = _mm256_mul_ps(etal, etal); //Get square of diff
+        sum256 = _mm256_add_ps(sum256, etal); //Add squared diff into sum
+    }
+    //Extract sum from main cycle
+    if (i != 0) //We have sum?
+    {
+        __m128 lo = _mm256_extractf128_ps(sum256, 0);
+        __m128 hi = _mm256_extractf128_ps(sum256, 1);
+        lo = _mm_add_ps(lo, hi);
+        __declspec(align(sizeof(__m128))) float tmp[4];
+        _mm_store_ps(tmp, lo);
+        sum += tmp[0] + tmp[1] + tmp[2] + tmp[3];
+    }
+
+    //End tail cycle
+    for (; i < size; i++)
+    {
+        float diff = *(etalonPtr + i) - *(predictedPtr + i); //Get diff
+        diff = (diff * diff); //Square diff
+        sum += diff; //Add squared diff into sum
+    }
+
+    return (sum / size);
+}
+
 
 static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
