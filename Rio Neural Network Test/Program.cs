@@ -59,15 +59,15 @@ namespace Rio_Neural_Network_Test
                 Console.WriteLine($"{testDataset.Count} test samples loaded\n");
 
                 //Create neural network
-                var network = new NeuralNetwork(layersCfg, new WeightsFillInfo(0.75f), seed);
+                var network = new NeuralNetwork(layersCfg, new WeightsFillInfo(0.8f), seed);
 
                 //Load neural network from file to resume training
                 //var network = NeuralNetwork.LoadFromBinary("trained.bin");
 
                 //Set learn rate and learn until error
-                network.LearnInfo.LearnRate = 0.0090f;
-                network.LearnInfo.LearnUntilError = 18.0f;
-                network.LearnInfo.Alpha = 6f;
+                network.LearnInfo.LearnRate = 0.0085f;
+                network.LearnInfo.LearnUntilError = 25.0f;
+                network.LearnInfo.Alpha = 5f;
 
                 //Train!
                 Train(network, seed);
@@ -153,14 +153,9 @@ namespace Rio_Neural_Network_Test
                 network.BackwardPropagateError(example.DesiredResult);
                 network.UpdateWeights(example.Input);
 
-                //Calc error/example and increase error/epoch
-                network.LearnInfo.ErrorPerExample = 0f;
-                for (int i = 0; i < output.Length; i++)
-                {
-                    float diff = example.DesiredResult[i] - output[i];
-                    network.LearnInfo.ErrorPerExample += (float)Math.Sqrt(diff * diff);
-                }
-                lastTrainErrorPerEpoch += (network.LearnInfo.ErrorPerExample / (float)output.Length);
+                //Calc mean square error per example and increase error per epoch
+                network.LearnInfo.ErrorPerExample = NeuralUtils.CalcRootMeanSquaredError(example.DesiredResult, output);
+                lastTrainErrorPerEpoch += network.LearnInfo.ErrorPerExample;
 
                 //Call DoEvents sometime to fix form freezes
                 if (network.LearnInfo.ExampleIndex % 30 == 0)
@@ -178,8 +173,8 @@ namespace Rio_Neural_Network_Test
                     trainDataset.Shuffle(random);
 
                     //Update charts
-                    chartForm.TrainErrorPerPoch.Add((float)lastTrainErrorPerEpoch);
-                    chartForm.TestErrorPerPoch.Add((float)testError);
+                    chartForm.TrainErrorPerPoch.Add(lastTrainErrorPerEpoch);
+                    chartForm.TestErrorPerPoch.Add(testError);
                     chartForm.RefreshChart();
 
                     //Prepare for next epoch
@@ -192,22 +187,16 @@ namespace Rio_Neural_Network_Test
             }
         }
 
-        private static float ComputeTestDatasetError(NeuralNetwork network)
+        private static unsafe float ComputeTestDatasetError(NeuralNetwork network)
         {
             float testError = 0f;
             foreach (var example in testDataset)
             {
                 //Just forward propagate
-                var output = network.ForwardPropagate(example.Input);
+                float* outputPtr = network.ForwardPropagatePtr(example.Input);
 
-                //Calc error/example and increase error/epoch
-                float exampleError = 0f;
-                for (int i = 0; i < output.Length; i++)
-                {
-                    float diff = example.DesiredResult[i] - output[i];
-                    exampleError += (float)Math.Sqrt(diff * diff);
-                }
-                testError += (exampleError / (float)output.Length);
+                //Calc mean square error
+                testError += NeuralUtils.CalcRootMeanSquaredError(example.DesiredResult, outputPtr);
             }
             return testError;
         }
