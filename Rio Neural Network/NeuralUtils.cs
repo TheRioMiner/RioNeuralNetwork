@@ -8,6 +8,42 @@ namespace RioNeuralNetwork
 {
 	public static class NeuralUtils
 	{
+		public static unsafe float CalcMeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+		{
+			return Native.MeanSquaredError(etalonPtr, predictedPtr, size);
+		}
+
+		public static unsafe float CalcMeanSquaredError(float[] etalon, float* predictedPtr)
+		{
+			fixed (float* etalonPtr = etalon)
+				return Native.MeanSquaredError(etalonPtr, predictedPtr, etalon.Length);
+		}
+
+		public static unsafe float CalcMeanSquaredError(float[] etalon, float[] predicted)
+		{
+			fixed (float* etalonPtr = etalon)
+			fixed (float* predictedPtr = predicted)
+			{
+				int size = Math.Min(etalon.Length, predicted.Length); //Get size from smallest array
+				return Native.MeanSquaredError(etalonPtr, predictedPtr, size);
+			}
+		}
+
+		public static unsafe float CalcRootMeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+		{
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalonPtr, predictedPtr, size));
+		}
+
+		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float* predictedPtr)
+		{
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predictedPtr));
+		}
+
+		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float[] predicted)
+		{
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predicted));
+		}
+
 		/// <summary>
 		/// Returns sub neural network from full neural network (like substring but for neural network layers)
 		/// Very helpful in getting encoder and decoder in autoencoder neural networks

@@ -215,7 +215,7 @@ namespace RioNeuralNetwork
 
 
 
-        public float* ForwardPropagate(float* inputArrayPtr, int inputArraySize, bool setInputToFirstLayerOutput = false)
+        public float* ForwardPropagatePtr(float* inputArrayPtr, int inputArraySize, bool setInputToFirstLayerOutput = false)
         {
             //Check pointer to input array
             if (inputArrayPtr == (float*)0)
@@ -230,6 +230,29 @@ namespace RioNeuralNetwork
 
             //Forward propagate!
             return Native.ForwardPropagate_Ptr(_instancePtr, inputArrayPtr, inputNeuronsCount, setInputToFirstLayerOutput);
+        }
+
+        public float* ForwardPropagatePtr(float[] input, bool setInputToFirstLayerOutput = false)
+        {
+            //Input not null?
+            if (input == null)
+                throw new ArgumentNullException("input", "Input array is null!");
+
+            //Get input neurons count
+            int inputNeuronsCount = InputNeuronsCount;
+
+            //Check that input size is valid
+            if (input.Length < inputNeuronsCount)
+                throw new ArgumentException("input", "Input array is too small for neural network input neurons!");
+            if (input.Length > inputNeuronsCount)
+                throw new ArgumentException("input", "Input array is too big for neural network input neurons!");
+
+            //Fixate arrays
+            fixed (float* inputPtr = &input[0])
+            {
+                //Forward propagate!
+                return Native.ForwardPropagate_Ptr(_instancePtr, inputPtr, inputNeuronsCount, setInputToFirstLayerOutput);
+            }
         }
 
         public float[] ForwardPropagate(float[] input, bool setInputToFirstLayerOutput = false)

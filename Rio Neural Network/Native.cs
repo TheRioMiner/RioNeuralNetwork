@@ -93,6 +93,11 @@ namespace RioNeuralNetwork
         public static FloatArrayFillDelegate FloatArrayFill = LoadDelegate<FloatArrayFillDelegate>("FloatArrayFill");
 
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate float MeanSquaredErrorDelegate(float* etalonPtr, float* predictedPtr, int size);
+        public static MeanSquaredErrorDelegate MeanSquaredError = LoadDelegate<MeanSquaredErrorDelegate>("MeanSquaredError");
+
+
         //ConvertBitmapToFloatArray
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void ConvertBitmapToFloatArrayRGBDelegate(float* floatArrayPtr, IntPtr bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp);
