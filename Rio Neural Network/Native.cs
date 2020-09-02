@@ -89,12 +89,28 @@ namespace RioNeuralNetwork
         //<---- Helpful ---->
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate bool IsProcessorSupportAVXDelegate();
+        public static IsProcessorSupportAVXDelegate IsProcessorSupportAVX = LoadDelegate<IsProcessorSupportAVXDelegate>("IsProcessorSupportAVX");
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int GetProcsNumDelegate();
+        public static GetProcsNumDelegate GetProcsNum = LoadDelegate<GetProcsNumDelegate>("GetProcsNum");
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void FloatArrayFillDelegate(float* floatArrayPtr, int floatArraySize, float value);
         public static FloatArrayFillDelegate FloatArrayFill = LoadDelegate<FloatArrayFillDelegate>("FloatArrayFill");
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void FloatArrayRandomAddDelegate(float* floatArrayPtr, int floatArraySize, float noiseCoeff, bool negative, bool limit, int seed, ThreadingMode threadingMode);
+        public static FloatArrayRandomAddDelegate FloatArrayRandomAdd = LoadDelegate<FloatArrayRandomAddDelegate>("FloatArrayRandomAdd");
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate float MeanSquaredErrorDelegate(float* etalonPtr, float* predictedPtr, int size);
+        public delegate void FloatArrayRandomFillDelegate(float* floatArrayPtr, int floatArraySize, float noiseCoeff, bool negative, int seed, ThreadingMode threadingMode);
+        public static FloatArrayRandomFillDelegate FloatArrayRandomFill = LoadDelegate<FloatArrayRandomFillDelegate>("FloatArrayRandomFill");
+
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate float MeanSquaredErrorDelegate(float* etalonPtr, float* predictedPtr, int size, ThreadingMode threadingMode);
         public static MeanSquaredErrorDelegate MeanSquaredError = LoadDelegate<MeanSquaredErrorDelegate>("MeanSquaredError");
 
 

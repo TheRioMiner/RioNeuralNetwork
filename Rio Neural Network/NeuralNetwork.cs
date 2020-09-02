@@ -9,20 +9,39 @@ namespace RioNeuralNetwork
 {
     public unsafe class NeuralNetwork : IDisposable
     {
-        //Native instance pointer
-        private IntPtr _instancePtr = IntPtr.Zero;
-
         /// <summary>
         /// Native instance pointer
         /// </summary>
-        public IntPtr InstancePtr => _instancePtr;
+        public IntPtr InstancePtr { get; private set; } = IntPtr.Zero;
 
+        /// <summary>
+        /// Get pointer to list of layers. (Sample of use: LayersPtr[index]->LearnRate = 0.5f;)
+        /// </summary>
+        public Layer** LayersPtr
+        {
+            get
+            {
+                CheckInstance();
+                return *(Layer***)(InstancePtr + IntPtr.Size);
+            }
+        }
 
 
         /// <summary>
         /// Learn info, can be saved into file to continue learning after closing program
         /// </summary>
         public LearnInfo LearnInfo = new LearnInfo(0.1f, 0.9f);
+
+
+        /// <summary>
+        /// Check that instance is not disposed
+        /// </summary>
+        private void CheckInstance()
+        {
+            //Instance initializated?
+            if (InstancePtr == IntPtr.Zero)
+                throw new ObjectDisposedException("NeuralNetwork", "NeuralNetwork native instance is null!");
+        }
 
 
         /// <summary>
@@ -38,11 +57,8 @@ namespace RioNeuralNetwork
                 if (index >= LayersCount)
                     throw new ArgumentOutOfRangeException("index", "Index out of range!");
 
-                //Get layers array pointer (lol so many ***)
-                Layer** _layersArrayPtr = *(Layer***)(_instancePtr + IntPtr.Size);
-
                 //Read layer
-                return *_layersArrayPtr[index];
+                return *LayersPtr[index];
             }
         }
 
@@ -53,9 +69,10 @@ namespace RioNeuralNetwork
         /// <returns></returns>
         public Layer[] GetLayers()
         {
+            var layersPtr = LayersPtr;
             var layers = new Layer[LayersCount];
             for (int i = 0; i < layers.Length; i++)
-                layers[i] = this[i];
+                layers[i] = *layersPtr[i];
             return layers;
         }
 
@@ -68,33 +85,19 @@ namespace RioNeuralNetwork
             get
             {
                 CheckInstance(); //Check that instance is exists
-                return *(int*)(_instancePtr); //Read layers count from instance
+                return *(int*)(InstancePtr); //Read layers count from instance
             }
         }
 
         /// <summary>
         /// Neural network input neurons count
         /// </summary>
-        public int InputNeuronsCount
-        {
-            get
-            {
-                CheckInstance(); //Check that instance is exists
-                return this[0].NeuronsCount; //Get neurons count from first layer
-            }
-        }
+        public int InputNeuronsCount => LayersPtr[0]->NeuronsCount; //Get neurons count from first layer
 
         /// <summary>
         /// Neural network output neurons count
         /// </summary>
-        public int OutputNeuronsCount
-        {
-            get
-            {
-                CheckInstance(); //Check that instance is exists
-                return this[this.LayersCount - 1].NeuronsCount; //Get neurons count from last layer
-            }
-        }
+        public int OutputNeuronsCount => LayersPtr[this.LayersCount - 1]->NeuronsCount; //Get neurons count from last layer
 
 
 
@@ -111,8 +114,8 @@ namespace RioNeuralNetwork
             //Create instance of neural network
             fixed (LayerCfg* layerCfgArrPtr = &layersCfg[0])
             {
-                _instancePtr = Native.CreateInstance((IntPtr)layerCfgArrPtr, layersCfg.Length);
-                if (_instancePtr == IntPtr.Zero)
+                InstancePtr = Native.CreateInstance((IntPtr)layerCfgArrPtr, layersCfg.Length);
+                if (InstancePtr == IntPtr.Zero)
                     throw new ArgumentException("Can't initializate - \"NeuralNetwork\"!");
             }
         }
@@ -136,14 +139,29 @@ namespace RioNeuralNetwork
         }
 
 
-
-        private void CheckInstance()
+        /// <summary>
+        /// Set desired threading mode to all neural network layers
+        /// </summary>
+        /// <param name="layersThreadingMode">Layers threading mode</param>
+        public void SetAllLayersThreadingMode(ThreadingMode layersThreadingMode)
         {
-            //Instance initializated?
-            if (_instancePtr == IntPtr.Zero)
-                throw new ObjectDisposedException("NeuralNetwork", "NeuralNetwork native instance is null!");
+            var layersPtr = LayersPtr;
+            var layersCount = LayersCount;
+            for (int l = 0; l < layersCount; l++)
+                layersPtr[l]->ThreadingMode = layersThreadingMode;
         }
 
+        /// <summary>
+        ///  Set desired learning rate to all neural network layers
+        /// </summary>
+        /// <param name="layersLearnRate">Layers learning rate</param>
+        public void SetAllLayersLearningRate(float layersLearnRate)
+        {
+            var layersPtr = LayersPtr;
+            var layersCount = LayersCount;
+            for (int l = 0; l < layersCount; l++)
+                layersPtr[l]->LearnRate = layersLearnRate;
+        }
 
 
         /// <summary>
@@ -156,23 +174,14 @@ namespace RioNeuralNetwork
             //Instance initializated?
             CheckInstance();
 
-            var random = new Random(randomSeed);
             for (int l = 0; l < LayersCount; l++)
             {
                 var layer = this[l];
                 for (int i = 0; i < layer.NeuronsCount; i++)
                 {
-                    float* weightsPtr = layer.Weights[i];
-                    for (int j = 0; j < layer.NeuronsWeightsSize; j++)
-                    {
-                        float w;
-                        if (weightsFillInfo.NegativeWeights)
-                            w = (float)((random.NextDouble() - 0.5d) * 2d); //Normalize values to [-1, 1] range
-                        else
-                            w = (float)(random.NextDouble()); //Values in [0, 1] range
-
-                        weightsPtr[j] = (w * weightsFillInfo.CoefficientOfWeights);
-                    }
+                    //Fill weights by native function
+                    int seed = (randomSeed + i) * l;
+                    Native.FloatArrayRandomFill(layer.Weights[i], layer.NeuronsWeightsSize, weightsFillInfo.CoefficientOfWeights, weightsFillInfo.NegativeWeights, seed, ThreadingMode.SingleThread);
                 }
             }
         }
@@ -191,24 +200,15 @@ namespace RioNeuralNetwork
             if (weightsFillInfo.Length != LayersCount)
                 throw new ArgumentException();
 
-            var random = new Random(randomSeed);
             for (int l = 0; l < LayersCount; l++)
             {
                 var layer = this[l];
                 var layerFillInfo = weightsFillInfo[l];
                 for (int i = 0; i < layer.NeuronsCount; i++)
                 {
-                    float* weightsPtr = layer.Weights[i];
-                    for (int j = 0; j < layer.NeuronsWeightsSize; j++)
-                    {
-                        float w;
-                        if (layerFillInfo.NegativeWeights)
-                            w = (float)((random.NextDouble() - 0.5d) * 2d); //Normalize values to [-1, 1] range
-                        else
-                            w = (float)(random.NextDouble()); //Values in [0, 1] range
-
-                        weightsPtr[j] = (w * layerFillInfo.CoefficientOfWeights);
-                    }
+                    //Fill weights by native function
+                    int seed = (randomSeed + i) * l;
+                    Native.FloatArrayRandomFill(layer.Weights[i], layer.NeuronsWeightsSize, layerFillInfo.CoefficientOfWeights, layerFillInfo.NegativeWeights, seed, ThreadingMode.SingleThread);
                 }
             }
         }
@@ -229,7 +229,7 @@ namespace RioNeuralNetwork
                 throw new ArgumentOutOfRangeException("inputArraySize", "Input array size too small for neural network input!");
 
             //Forward propagate!
-            return Native.ForwardPropagate_Ptr(_instancePtr, inputArrayPtr, inputNeuronsCount, setInputToFirstLayerOutput);
+            return Native.ForwardPropagate_Ptr(InstancePtr, inputArrayPtr, inputNeuronsCount, setInputToFirstLayerOutput);
         }
 
         public float* ForwardPropagatePtr(float[] input, bool setInputToFirstLayerOutput = false)
@@ -251,7 +251,7 @@ namespace RioNeuralNetwork
             fixed (float* inputPtr = &input[0])
             {
                 //Forward propagate!
-                return Native.ForwardPropagate_Ptr(_instancePtr, inputPtr, inputNeuronsCount, setInputToFirstLayerOutput);
+                return Native.ForwardPropagate_Ptr(InstancePtr, inputPtr, inputNeuronsCount, setInputToFirstLayerOutput);
             }
         }
 
@@ -278,7 +278,7 @@ namespace RioNeuralNetwork
             fixed (float* outputPtr = &output[0])
             {
                 //Forward propagate!
-                bool result = Native.ForwardPropagate_Cpy(_instancePtr, inputPtr, inputNeuronsCount, outputPtr, setInputToFirstLayerOutput);
+                bool result = Native.ForwardPropagate_Cpy(InstancePtr, inputPtr, inputNeuronsCount, outputPtr, setInputToFirstLayerOutput);
                 if (!result)
                     return null; //Something went wrong!
             }
@@ -302,7 +302,7 @@ namespace RioNeuralNetwork
             fixed (float* expectedPtr = &expected[0])
             {
                 //Backward propagate error!
-                return Native.BackwardPropagateError(_instancePtr, expectedPtr, outputNeuronsCount);
+                return Native.BackwardPropagateError(InstancePtr, expectedPtr, outputNeuronsCount);
             }
         }
 
@@ -321,7 +321,7 @@ namespace RioNeuralNetwork
             fixed (float* inputPtr = &input[0])
             {
                 //Update weigths!
-                return Native.UpdateWeights(_instancePtr, inputPtr, learnRate, alpha);
+                return Native.UpdateWeights(InstancePtr, inputPtr, learnRate, alpha);
             }
         }
 
@@ -340,7 +340,7 @@ namespace RioNeuralNetwork
             using (var bw = new BinaryWriter(fs, Encoding.UTF8))
             {
                 //Write file signature
-                bw.Write("RNN_BIN0".ToCharArray());
+                bw.Write("RNN_BIN1".ToCharArray());
 
                 //Write fileflags
                 bw.Write((uint)fileFlags);
@@ -354,8 +354,10 @@ namespace RioNeuralNetwork
                     bw.Write((uint)layersCount);
                     for (int l = 0; l < layersCount; l++)
                     {
-                        bw.Write((uint)this[l].ActivationType);
                         bw.Write((uint)this[l].NeuronsCount);
+                        bw.Write((float)this[l].LearnRate);
+                        bw.Write((uint)this[l].ActivationType);
+                        bw.Write((int)this[l].ThreadingMode);
                     }
                 }
 
@@ -436,7 +438,7 @@ namespace RioNeuralNetwork
                 string signature = new string(br.ReadChars(8));
                 if (!signature.StartsWith("RNN_BIN"))
                     throw new Exception("Invalid file signature!");
-                else if (!signature.EndsWith("0"))
+                else if (!signature.EndsWith("0") && !signature.EndsWith("1"))
                     throw new Exception("File version mismatch!");
 
                 //Read file flags
@@ -468,9 +470,20 @@ namespace RioNeuralNetwork
                 var layersCfg = new LayerCfg[layersCount];
                 for (int l = 0; l < layersCount; l++)
                 {
-                    ActivationType activationType = (ActivationType)br.ReadUInt32();
-                    int neuronsCount = (int)br.ReadUInt32();
-                    layersCfg[l] = new LayerCfg(neuronsCount, activationType);
+                    if (signature.EndsWith("1"))
+                    {
+                        var neuronsCount = (int)br.ReadUInt32();
+                        var learnRate = br.ReadSingle();
+                        var activationType = (ActivationType)br.ReadUInt32();
+                        var threadingMode = (ThreadingMode)br.ReadInt32();
+                        layersCfg[l] = new LayerCfg(neuronsCount, activationType, learnRate, threadingMode);
+                    }
+                    else if (signature.EndsWith("0"))
+                    {
+                        var activationType = (ActivationType)br.ReadUInt32();
+                        var neuronsCount = (int)br.ReadUInt32();
+                        layersCfg[l] = new LayerCfg(neuronsCount, activationType);
+                    }
                 }
 
                 //Init neural network from readed cfg
@@ -533,7 +546,7 @@ namespace RioNeuralNetwork
 
 
 
-        public bool IsDisposed => (_instancePtr == IntPtr.Zero);
+        public bool IsDisposed => (InstancePtr == IntPtr.Zero);
 
         ~NeuralNetwork()
         {
@@ -542,10 +555,10 @@ namespace RioNeuralNetwork
 
         public void Dispose()
         {
-            if (_instancePtr != IntPtr.Zero)
+            if (InstancePtr != IntPtr.Zero)
             {
-                Native.DeleteInstance(_instancePtr);
-                _instancePtr = IntPtr.Zero;
+                Native.DeleteInstance(InstancePtr);
+                InstancePtr = IntPtr.Zero;
             }
         }
     }

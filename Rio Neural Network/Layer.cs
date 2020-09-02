@@ -8,19 +8,21 @@ namespace RioNeuralNetwork
 	{
 		public readonly int NeuronsCount;
 		public readonly int NeuronsWeightsSize;
-		public float LayerLearnRate;
+		private readonly IntPtr ActivationFunc; //Ptr to native function of the activation
 		public readonly float** Weights;
 		public readonly float** WeightsMomentum;
 		public readonly float* Outputs;
 		public readonly float* Errors;
+		public float LearnRate;
 		public readonly ActivationType ActivationType;
-		private readonly IntPtr ActivationFunc; //Ptr to native function of the activation
+		public ThreadingMode ThreadingMode;
+
 
 
 		public LayerCfg ToLayerCfg()
 		{
 			int neuronsWeights = (NeuronsWeightsSize > 1) ? (NeuronsWeightsSize - 1/*bias*/) : 0;
-			return new LayerCfg(NeuronsCount, neuronsWeights, ActivationType, LayerLearnRate);
+			return new LayerCfg(NeuronsCount, neuronsWeights, ActivationType, LearnRate, ThreadingMode);
 		}
 	}
 }

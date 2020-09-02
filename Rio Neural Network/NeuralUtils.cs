@@ -3,45 +3,157 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 
 namespace RioNeuralNetwork
 {
 	public static class NeuralUtils
 	{
-		public static unsafe float CalcMeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+		/// <summary>
+		/// Determine if the AVX processor supports the instruction?
+		/// (Does not determine OS support!)
+		/// </summary>
+		/// <returns></returns>
+		public static bool IsProcessorSupportAVX()
+        {
+			return Native.IsProcessorSupportAVX();
+        }
+
+		/// <summary>
+		/// Get maximum thread count that will be used in "ThreadingMode.Max"
+		/// </summary>
+		/// <returns></returns>
+		public static int GetMaxThreadNum()
+        {
+			return Native.GetProcsNum();
+        }
+
+		/// <summary>
+		/// Get half of maximum thread count
+		/// </summary>
+		/// <returns></returns>
+		public static int GetHalfFromMaxThreadNum()
 		{
-			return Native.MeanSquaredError(etalonPtr, predictedPtr, size);
+			return (Native.GetProcsNum() / 2);
 		}
 
-		public static unsafe float CalcMeanSquaredError(float[] etalon, float* predictedPtr)
+		/// <summary>
+		/// Copy data from source array to destination array
+		/// (If not chosen strict size check, then size will be choosen by smallest array size)
+		/// </summary>
+		/// <param name="dest">Destination array</param>
+		/// <param name="src">Source array</param>
+		public static unsafe void FloatArrayCopy(float[] dest, float[] src, bool strictSizeCheck = true)
+        {
+			if (strictSizeCheck && dest.Length != src.Length)
+				throw new ArgumentOutOfRangeException("Size of arrays is different!");
+
+			int size = Math.Min(dest.Length, src.Length);
+			fixed (float* destPtr = dest)
+			fixed (float* srcPtr = src)
+				Native.memcpy(destPtr, srcPtr, (UIntPtr)(size * 4));
+        }
+
+		/// <summary>
+		/// Add noise to float array (USE OF "SEED" IS USELESS IF YOU USE MULTITHREADING MODE!!!)
+		/// </summary>
+		/// <param name="arrayPtr">Array pointer</param>
+		/// <param name="arraySize">Array size</param>
+		/// <param name="noiseCoeff">Coefficient of noise. For example: 0.1f with Negative=true will generate -0.1 to 0.1</param>
+		/// <param name="negative">Generate negative side of float value.</param>
+		/// <param name="limit">Limit value after adding into array?</param>
+		/// <param name="seed">Seed for random, 0 for random seed. (USELESS IN MULTITHREADING MODE!!!)</param>
+		/// <param name="threadingMode">Threading mode. Using multithreading not recommended for small arrays (~4k or smaller)</param>
+		public static unsafe void FloatArrayRandomAdd(float* arrayPtr, int arraySize, float noiseCoeff, bool negative, bool limit, int seed = 0, ThreadingMode threadingMode = ThreadingMode.Default)
+		{
+			if (seed == 0)
+				seed = Environment.TickCount;
+			Native.FloatArrayRandomAdd(arrayPtr, arraySize, noiseCoeff, negative, limit, seed, threadingMode);
+		}
+
+		/// <summary>
+		/// Add noise to float array (USE OF "SEED" IS USELESS IF YOU USE MULTITHREADING MODE!!!)
+		/// </summary>
+		/// <param name="array">Float array</param>
+		/// <param name="noiseCoeff">Coefficient of noise. For example: 0.1f with Negative=true will generate -0.1 to 0.1</param>
+		/// <param name="negative">Generate negative side of float value.</param>
+		/// <param name="limit">Limit value after adding into array?</param>
+		/// <param name="seed">Seed for random, 0 for random seed. (USELESS IN MULTITHREADING MODE!!!)</param>
+		/// <param name="threadingMode">Threading mode. Using multithreading not recommended for small arrays (~4k or smaller)</param>
+		public static unsafe void FloatArrayRandomAdd(float[] array, float noiseCoeff, bool negative, bool limit, int seed = 0, ThreadingMode threadingMode = ThreadingMode.Default)
+        {
+			if (seed == 0)
+				seed = Environment.TickCount;
+			fixed (float* arrayPtr = array)
+				Native.FloatArrayRandomAdd(arrayPtr, array.Length, noiseCoeff, negative, limit, seed, threadingMode);
+		}
+
+		/// <summary>
+		/// Fill randomly the float array (USE OF "SEED" IS USELESS IF YOU USE MULTITHREADING MODE!!!)
+		/// </summary>
+		/// <param name="arrayPtr">Array pointer</param>
+		/// <param name="arraySize">Array size</param>
+		/// <param name="noiseCoeff">Coefficient of noise. For example: 0.1f with Negative=true will generate -0.1 to 0.1</param>
+		/// <param name="negative">Generate negative side of float value.</param>
+		/// <param name="seed">Seed for random, 0 for random seed. (USELESS IN MULTITHREADING MODE!!!)</param>
+		/// <param name="threadingMode">Threading mode. Using multithreading not recommended for small arrays (~4k or smaller)</param>
+		public static unsafe void FloatArrayRandomFill(float* arrayPtr, int arraySize, float noiseCoeff, bool negative, int seed = 0, ThreadingMode threadingMode = ThreadingMode.Default)
+        {
+			if (seed == 0)
+				seed = Environment.TickCount;
+			Native.FloatArrayRandomFill(arrayPtr, arraySize, noiseCoeff, negative, seed, threadingMode);
+		}
+
+		/// <summary>
+		/// Fill randomly the float array (USE OF "SEED" IS USELESS IF YOU USE MULTITHREADING MODE!!!)
+		/// </summary>
+		/// <param name="array">Array</param>
+		/// <param name="noiseCoeff">Coefficient of noise. For example: 0.1f with Negative=true will generate -0.1 to 0.1</param>
+		/// <param name="negative">Generate negative side of float value.</param>
+		/// <param name="seed">Seed for random, 0 for random seed. (USELESS IN MULTITHREADING MODE!!!)</param>
+		/// <param name="threadingMode">Threading mode. Using multithreading not recommended for small arrays (~4k or smaller)</param>
+		public static unsafe void FloatArrayRandomAdd(float[] array, float noiseCoeff, bool negative, int seed = 0, ThreadingMode threadingMode = ThreadingMode.Default)
+		{
+			if (seed == 0)
+				seed = Environment.TickCount;
+			fixed (float* arrayPtr = array)
+				Native.FloatArrayRandomFill(arrayPtr, array.Length, noiseCoeff, negative, seed, threadingMode);
+		}
+
+		public static unsafe float CalcMeanSquaredError(float* etalonPtr, float* predictedPtr, int size, ThreadingMode threadingMode = ThreadingMode.Default)
+		{
+			return Native.MeanSquaredError(etalonPtr, predictedPtr, size, threadingMode);
+		}
+
+		public static unsafe float CalcMeanSquaredError(float[] etalon, float* predictedPtr, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
 			fixed (float* etalonPtr = etalon)
-				return Native.MeanSquaredError(etalonPtr, predictedPtr, etalon.Length);
+				return Native.MeanSquaredError(etalonPtr, predictedPtr, etalon.Length, threadingMode);
 		}
 
-		public static unsafe float CalcMeanSquaredError(float[] etalon, float[] predicted)
+		public static unsafe float CalcMeanSquaredError(float[] etalon, float[] predicted, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
 			fixed (float* etalonPtr = etalon)
 			fixed (float* predictedPtr = predicted)
 			{
 				int size = Math.Min(etalon.Length, predicted.Length); //Get size from smallest array
-				return Native.MeanSquaredError(etalonPtr, predictedPtr, size);
+				return Native.MeanSquaredError(etalonPtr, predictedPtr, size, threadingMode);
 			}
 		}
 
-		public static unsafe float CalcRootMeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+		public static unsafe float CalcRootMeanSquaredError(float* etalonPtr, float* predictedPtr, int size, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
-			return (float)Math.Sqrt(CalcMeanSquaredError(etalonPtr, predictedPtr, size));
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalonPtr, predictedPtr, size, threadingMode));
 		}
 
-		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float* predictedPtr)
+		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float* predictedPtr, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
-			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predictedPtr));
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predictedPtr, threadingMode));
 		}
 
-		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float[] predicted)
+		public static unsafe float CalcRootMeanSquaredError(float[] etalon, float[] predicted, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
-			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predicted));
+			return (float)Math.Sqrt(CalcMeanSquaredError(etalon, predicted, threadingMode));
 		}
 
 		/// <summary>

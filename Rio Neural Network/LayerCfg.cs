@@ -10,29 +10,33 @@ namespace RioNeuralNetwork
 		internal int NeuronsWeightsSize;
 		public ActivationType ActivationType;
 		public float LayerLearnRate;
+		public ThreadingMode LayerThreadingMode;
 
 
-		public LayerCfg(int neuronsCount, ActivationType activationType, float layerLearnRate = 1f)
+		public LayerCfg(int neuronsCount, ActivationType activationType, float layerLearnRate = 1f, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
 			this.NeuronsCount = neuronsCount;
 			this.NeuronsWeightsSize = 0; //Must be setted further
 			this.ActivationType = activationType;
 			this.LayerLearnRate = layerLearnRate;
+			this.LayerThreadingMode = threadingMode;
 		}
 
-		internal LayerCfg(int neuronsCount, int neuronsWeightsSize, ActivationType activationType, float layerLearnRate)
+		internal LayerCfg(int neuronsCount, int neuronsWeightsSize, ActivationType activationType, float layerLearnRate, ThreadingMode threadingMode)
 		{
 			this.NeuronsCount = neuronsCount;
 			this.NeuronsWeightsSize = neuronsWeightsSize;
 			this.ActivationType = activationType;
 			this.LayerLearnRate = layerLearnRate;
+			this.LayerThreadingMode = threadingMode;
 		}
 
-		public LayerCfg(int neuronsCount, string activationType, float layerLearnRate = 1f)
+		public LayerCfg(int neuronsCount, string activationType, float layerLearnRate = 1f, ThreadingMode threadingMode = ThreadingMode.Default)
 		{
 			this.NeuronsCount = neuronsCount;
 			this.NeuronsWeightsSize = 0; //Must be setted further
-			switch (activationType.ToLower())
+			string actType = (activationType == null) ? string.Empty : activationType.ToLower();
+			switch (actType)
 			{
 				case "":
 				case "default":
@@ -46,14 +50,19 @@ namespace RioNeuralNetwork
 				case "relu":
 					this.ActivationType = ActivationType.ReLU;
 					break;
+				case "lrelu":
+				case "leakyrelu":
+					this.ActivationType = ActivationType.LReLU;
+					break;
 
 				default:
 					throw new ArgumentException($"\"{activationType}\" - invalid activation type!");
 			}
 			this.LayerLearnRate = layerLearnRate;
+			this.LayerThreadingMode = threadingMode;
 		}
 
-		public LayerCfg(int neuronsCount, float layerLearnRate = 1f) : this(neuronsCount, ActivationType.Sigmoid, layerLearnRate)
+		public LayerCfg(int neuronsCount, float layerLearnRate = 1f, ThreadingMode threadingMode = ThreadingMode.Default) : this(neuronsCount, ActivationType.Sigmoid, layerLearnRate, threadingMode)
 		{ }
 	}
 }
