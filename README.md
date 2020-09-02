@@ -1,7 +1,7 @@
 # Rio Neural Network
 Simple and performance neural network _.NET_ library
 
-Its use native C++ dll for __AVX2__ acceleration!
+Its use native C++ dll for __AVX__ acceleration!
 
 Supported x64 and x86 platforms.
 
