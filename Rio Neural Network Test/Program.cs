@@ -3,15 +3,17 @@
 using System;
 using System.IO;
 using System.Drawing;
+using System.Diagnostics;
 using System.Windows.Forms;
 using System.Collections.Generic;
+
 using RioNeuralNetwork;
 
 namespace Rio_Neural_Network_Test
 {
     static class Program
     {
-        static float[][] desiredOutputs = new float[][]
+        static readonly float[][] desiredOutputs = new float[][]
         {
             new float[] { 1f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f }, //0
 			new float[] { 0f, 1f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f }, //1
@@ -25,7 +27,7 @@ namespace Rio_Neural_Network_Test
 			new float[] { 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 1f }, //9
         };
 
-        static LayerCfg[] layersCfg = new LayerCfg[]
+        static readonly LayerCfg[] layersCfg = new LayerCfg[]
         {
             new LayerCfg(256, "sigmoid"),
             new LayerCfg(256, "tanh"),
@@ -44,12 +46,27 @@ namespace Rio_Neural_Network_Test
 
         static void Main(string[] args)
         {
+            if (!NeuralUtils.IsProcessorSupportAVX())
+            {
+                Console.WriteLine("Your processor does not support AVX instructions!");
+                Console.WriteLine("Press 'Enter' to exit...");
+                Console.ReadLine();
+                return;
+            }
+
             Console.WriteLine("Choose mode - \"test\" or \"train\"\n");
             string mode = Console.ReadLine().ToLower();
             Console.WriteLine();
             if (mode == "train")
             {
+                //Ask the user if multithreading is needed?
+                Console.WriteLine("Use multi-threading? - Y/N");
+                ConsoleKey key;
+                while ((key = Console.ReadKey().Key) != ConsoleKey.Y && key != ConsoleKey.N) { } //Wait valid key
+                bool useMultiThreading = key == ConsoleKey.Y;
+
                 //Load samples
+                Console.WriteLine("\n");
                 Console.WriteLine($"Loading samples...");
                 trainDataset = LoadSamplesFromDir("train");
                 testDataset = LoadSamplesFromDir("test");
@@ -66,37 +83,43 @@ namespace Rio_Neural_Network_Test
 
                 //Set learn rate and learn until error
                 network.LearnInfo.LearnRate = 0.0085f;
-                network.LearnInfo.LearnUntilError = 25.0f;
+                network.LearnInfo.LearnUntilError = 27.0f;
                 network.LearnInfo.Alpha = 5f;
 
-                //Train!
-                Train(network, seed);
+                var timer = Stopwatch.StartNew();
+                {
+                    //Train!
+                    Train(network, seed, useMultiThreading);
+                }
+                timer.Stop();
 
                 //Training finished, save neural network to file
                 network.SaveToBinary("trained.bin");
 
                 //Write training info
                 Console.WriteLine($"\nTraining finished in {network.LearnInfo.Epochs} epochs!");
+                Console.WriteLine($"Multithreaded: {useMultiThreading}");
+                Console.WriteLine($"Elapsed time: {timer.Elapsed.Minutes} minutes, {timer.Elapsed.Seconds} seconds");
                 Console.WriteLine($"Reached train error: {Math.Round(network.LearnInfo.ErrorPerEpoch, 4)}");
                 Console.WriteLine($"Reached test error: {Math.Round(ComputeTestDatasetError(network), 4)}\n");
 
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
+                Console.WriteLine("Press 'Enter' to exit...");
+                Console.ReadLine();
             }
             else if (mode == "test")
             {
                 if (!File.Exists("trained.bin"))
                 {
                     Console.WriteLine("No file of trained neural network!");
-                    Console.WriteLine("Press any key to exit...");
-                    Console.ReadKey();
+                    Console.WriteLine("Press 'Enter' to exit...");
+                    Console.ReadLine();
                 }
 
                 if (!File.Exists("test.png"))
                 {
                     Console.WriteLine("No file of test image!");
-                    Console.WriteLine("Press any key to exit...");
-                    Console.ReadKey();
+                    Console.WriteLine("Press 'Enter' to exit...");
+                    Console.ReadLine();
                 }
 
                 //Load trained network
@@ -118,7 +141,7 @@ namespace Rio_Neural_Network_Test
                 Console.WriteLine("");
 
                 Console.WriteLine("Do you want test again? (y/n)");
-                var key = ConsoleKey.Escape;
+                ConsoleKey key;
                 while ((key = Console.ReadKey().Key) != ConsoleKey.Y && key != ConsoleKey.N) { } //Wait valid key
 
                 //If yes, retry
@@ -131,30 +154,32 @@ namespace Rio_Neural_Network_Test
             else
             {
                 Console.WriteLine("Invalid mode!");
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey();
+                Console.WriteLine("Press 'Enter' to exit...");
+                Console.ReadLine();
             }
         }
 
 
-        private static void Train(NeuralNetwork network, int seed)
+        private static void Train(NeuralNetwork network, int seed, bool useMultiThreading)
         {
             //Show chart
             var chartForm = new Chart_Form(network);
             chartForm.Show();
-
+            
             var random = new Random(seed);
             var lastTrainErrorPerEpoch = 0f;
             var lastTestErrorPerEpoch = network.LearnInfo.LearnUntilError;
+            var threadingMode = useMultiThreading ? ThreadingMode.Max : ThreadingMode.SingleThread;
+            network.SetAllLayersThreadingMode(threadingMode);
             while (lastTestErrorPerEpoch >= network.LearnInfo.LearnUntilError)
             {
                 var example = trainDataset[(int)network.LearnInfo.ExampleIndex];
-                var output = network.ForwardPropagate(example.Input);
+                var output = network.ForwardPropagate(example.Input, false);
                 network.BackwardPropagateError(example.DesiredResult);
                 network.UpdateWeights(example.Input);
 
                 //Calc mean square error per example and increase error per epoch
-                network.LearnInfo.ErrorPerExample = NeuralUtils.CalcRootMeanSquaredError(example.DesiredResult, output);
+                network.LearnInfo.ErrorPerExample = NeuralUtils.CalcRootMeanSquaredError(example.DesiredResult, output, threadingMode);
                 lastTrainErrorPerEpoch += network.LearnInfo.ErrorPerExample;
 
                 //Call DoEvents sometime to fix form freezes

@@ -34,8 +34,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>Rio_Neural_Network_Test.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
