@@ -2,8 +2,15 @@
 
 #pragma once
 #include <iostream>
+#include <random>
 #include <immintrin.h>
+#include <omp.h>
+#include <intrin.h>
 #include "YUVICfg.h"
+#include "ThreadingMode.h"
+
+
+#define NOINLINE __declspec(noinline)
 
 
 #pragma pack(push, 1)
@@ -26,23 +33,171 @@ struct PixelDataBGR
 #pragma pack(pop)
 
 
-//AVX2 accelerated fast fill float array with desired value
-static void Utils_AVX2_FloatArrayFill(float* arrayPtr, int size, float value)
-{
-    //Main cycle
-    int i = 0;
-    int mainCount = (size & -8);
-    __m256 value256 = _mm256_set1_ps(value);
-    for (; i < mainCount; i += 8)
-        _mm256_storeu_ps(arrayPtr + i, value256);
 
-    //End tail cycle
-    for (; i < size; i++)
-        *(arrayPtr + i) = value;
+NOINLINE static bool Utils_IsProcessorSupportAVX()
+{
+    int cpuInfo[4] = { 0 };
+    __cpuid(cpuInfo, 0);
+    if (cpuInfo[0])
+    {
+        __cpuid(cpuInfo, 1);
+        if (cpuInfo[2] & (1 << 28))
+        {
+            //Supported!
+            return true;
+        }
+    }
+
+    //Not supported!
+    return false;
+}
+
+_inline static int Utils_GetProcsNum()
+{
+    return omp_get_num_procs();
+}
+
+_inline static bool Utils_BeginThreading(ThreadingMode threadingMode)
+{
+    switch (threadingMode)
+    {
+        case ThreadingMode::SINGLETHREAD:
+        case ThreadingMode::INVALID:
+            return false;
+        case ThreadingMode::MAX:
+            omp_set_num_threads(omp_get_num_procs());
+            return true;
+        default:
+            omp_set_num_threads((int)threadingMode);
+            return true;
+    }
+}
+
+NOINLINE static void Utils_FloatArrayFill(float* arrayPtr, float value, int size)
+{
+    //Convert float to int by mem casting
+    int intVal = *(int*)(&value);
+
+    //Use memset
+    memset(arrayPtr, intVal, size * sizeof(float));
+}
+
+NOINLINE static void Utils_FloatArrayRandomAdd(float* floatArrayPtr, int floatArraySize, float randomCoeff, bool negative, bool limit, int seed, ThreadingMode threadingMode)
+{
+    if (Utils_BeginThreading(threadingMode))
+    {
+        //Multi-thread
+        #pragma omp parallel
+        {
+            auto rand = std::mt19937(seed + omp_get_thread_num());
+            auto urd = std::uniform_real_distribution<>(negative ? -1 : 0, 1);
+
+            #pragma omp for
+            for (int i = 0; i < floatArraySize; i++)
+            {
+                //Get value
+                float val = floatArrayPtr[i];
+
+                //Add noise to value
+                val += ((float)(urd(rand)) * randomCoeff);
+
+                //Limiting
+                if (limit)
+                {
+                    //Upper limit
+                    if (val > 1.0f)
+                        val = 1.0f;
+
+                    //Down limit
+                    if (negative)
+                    {
+                        if (val < -1.0f)
+                            val = -1.0f;
+                    }
+                    else
+                    {
+                        if (val < 0.0f)
+                            val = 0.0f;
+                    }
+                }
+
+                //Set back value
+                floatArrayPtr[i] = val;
+            }
+        }
+    }
+    else
+    {
+        //Single-thread
+        auto rand = std::mt19937(seed + omp_get_thread_num());
+        auto urd = std::uniform_real_distribution<>(negative ? -1 : 0, 1);
+        for (int i = 0; i < floatArraySize; i++)
+        {
+            //Get value
+            float val = floatArrayPtr[i];
+
+            //Add noise to value
+            val += ((float)(urd(rand)) * randomCoeff);
+
+            //Limiting
+            if (limit)
+            {
+                //Upper limit
+                if (val > 1.0f)
+                    val = 1.0f;
+
+                //Down limit
+                if (negative)
+                {
+                    if (val < -1.0f)
+                        val = -1.0f;
+                }
+                else
+                {
+                    if (val < 0.0f)
+                        val = 0.0f;
+                }
+            }
+
+            //Set back value
+            floatArrayPtr[i] = val;
+        }
+    }
+}
+
+NOINLINE static void Utils_FloatArrayRandomFill(float* floatArrayPtr, int floatArraySize, float randomCoeff, bool negative, int seed, ThreadingMode threadingMode)
+{
+    if (Utils_BeginThreading(threadingMode))
+    {
+        //Multi-thread
+        #pragma omp parallel
+        {
+            auto rand = std::mt19937(seed + omp_get_thread_num());
+            auto urd = std::uniform_real_distribution<>(negative ? -1 : 0, 1);
+
+            #pragma omp for
+            for (int i = 0; i < floatArraySize; i++)
+            {
+                float randVal = ((float)(urd(rand)) * randomCoeff);
+                floatArrayPtr[i] = randVal;
+            }
+        }
+    }
+    else
+    {
+        //Single-thread
+        auto rand = std::mt19937(seed + omp_get_thread_num());
+        auto urd = std::uniform_real_distribution<>(negative ? -1 : 0, 1);
+        for (int i = 0; i < floatArraySize; i++)
+        {
+            float randVal = ((float)(urd(rand)) * randomCoeff);
+            floatArrayPtr[i] = randVal;
+        }
+    }
 }
 
 
-static float Utils_MeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+NOINLINE static float Utils_MeanSquaredError(float* etalonPtr, float* predictedPtr, int size, ThreadingMode threadingMode = ThreadingMode::DEFAULT)
 {
     float sum = 0.0f;
 
@@ -50,13 +205,30 @@ static float Utils_MeanSquaredError(float* etalonPtr, float* predictedPtr, int s
     int i = 0;
     int mainCount = (size & -8);
     __m256 sum256 = _mm256_setzero_ps();
-    for (; i < mainCount; i += 8)
+    if (Utils_BeginThreading(threadingMode))
     {
-        __m256 etal = _mm256_load_ps(etalonPtr + i);
-        __m256 pred = _mm256_load_ps(predictedPtr + i);
-        etal = _mm256_sub_ps(etal, pred); //Get diff and store in etal
-        etal = _mm256_mul_ps(etal, etal); //Get square of diff
-        sum256 = _mm256_add_ps(sum256, etal); //Add squared diff into sum
+        //Multi-thread
+        #pragma omp parallel for 
+        for (i = 0; i < mainCount; i += 8)
+        {
+            __m256 etal = _mm256_load_ps(etalonPtr + i);
+            __m256 pred = _mm256_load_ps(predictedPtr + i);
+            etal = _mm256_sub_ps(etal, pred); //Get diff and store in etal
+            etal = _mm256_mul_ps(etal, etal); //Get square of diff
+            sum256 = _mm256_add_ps(sum256, etal); //Add squared diff into sum
+        }
+    }
+    else
+    {
+        //Single-thread
+        for (i = 0; i < mainCount; i += 8)
+        {
+            __m256 etal = _mm256_load_ps(etalonPtr + i);
+            __m256 pred = _mm256_load_ps(predictedPtr + i);
+            etal = _mm256_sub_ps(etal, pred); //Get diff and store in etal
+            etal = _mm256_mul_ps(etal, etal); //Get square of diff
+            sum256 = _mm256_add_ps(sum256, etal); //Add squared diff into sum
+        }
     }
     //Extract sum from main cycle
     if (i != 0) //We have sum?
@@ -81,7 +253,7 @@ static float Utils_MeanSquaredError(float* etalonPtr, float* predictedPtr, int s
 }
 
 
-static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
+NOINLINE static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
     int rowSize = abs(bitmapStride);
@@ -92,6 +264,7 @@ static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned ch
         {
             if (is32bpp)
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 *(floatArrayPtr + i++) = (px.R / 255.0f);
                 *(floatArrayPtr + i++) = (px.G / 255.0f);
@@ -99,6 +272,7 @@ static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned ch
             }
             else 
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 *(floatArrayPtr + i++) = (px.R / 255.0f);
                 *(floatArrayPtr + i++) = (px.G / 255.0f);
@@ -108,7 +282,7 @@ static void Utils_ConvertBitmapToFloatArrayRGB(float* floatArrayPtr, unsigned ch
     }
 }
 
-static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
+NOINLINE static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
 {
     int i = 0;
     int rowSize = abs(bitmapStride);
@@ -119,6 +293,7 @@ static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned c
         {
             if (is32bpp)
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 int U = (int)((-0.148f * px.R - 0.291f * px.G + 0.439f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int V = (int)((0.439f * px.R - 0.368f * px.G - 0.071f * px.B + 128.0f) / yuviCfg->UVDiv);
@@ -128,6 +303,7 @@ static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned c
             }
             else
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 int U = (int)((-0.148f * px.R - 0.291f * px.G + 0.439f * px.B + 128.0f) / yuviCfg->UVDiv);
                 int V = (int)((0.439f * px.R - 0.368f * px.G - 0.071f * px.B + 128.0f) / yuviCfg->UVDiv);
@@ -139,7 +315,7 @@ static void Utils_ConvertBitmapToFloatArrayYUVI(float* floatArrayPtr, unsigned c
     }
 }
 
-static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
+NOINLINE static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
     int rowSize = abs(bitmapStride);
@@ -150,11 +326,13 @@ static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsig
         {
             if (is32bpp)
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGRA px = *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex));
                 *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
             }
             else
             {
+                #pragma warning (suppress : 26451)
                 PixelDataBGR px = *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex));
                 *(floatArrayPtr + i++) = ((px.R * 0.299f) + (px.G * 0.587f) + (px.B * 0.114f)) / 255.0f;
             }
@@ -164,7 +342,7 @@ static void Utils_ConvertBitmapToFloatArrayGrayscale(float* floatArrayPtr, unsig
 
 
 
-static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
+NOINLINE static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
     float val = 0.0f;
@@ -198,6 +376,7 @@ static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned ch
                 px.B = (unsigned char)(val * 255.0f);
 
                 //Set pixel
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex)) = px;
             }
             else 
@@ -223,13 +402,14 @@ static void Utils_ConvertFloatArrayRGBToBitmap(float* floatArrayPtr, unsigned ch
                 px.B = (unsigned char)(val * 255.0f);
 
                 //Set pixel
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex)) = px;
             }
         }
     }
 }
 
-static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
+NOINLINE static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp, YUVICfg* yuviCfg)
 {
     int i = 0;
     int rowSize = abs(bitmapStride);
@@ -273,6 +453,7 @@ static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned c
                 px.R = (unsigned char)R;
                 px.G = (unsigned char)G;
                 px.B = (unsigned char)B;
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGRA*)(bitmapScan0Ptr + ((x * 4) + yIndex)) = px;
             }
             else 
@@ -281,13 +462,14 @@ static void Utils_ConvertFloatArrayYUVIToBitmap(float* floatArrayPtr, unsigned c
                 px.R = (unsigned char)R;
                 px.G = (unsigned char)G;
                 px.B = (unsigned char)B;
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGR*)(bitmapScan0Ptr + ((x * 3) + yIndex)) = px;
             }
         }
     }
 }
 
-static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
+NOINLINE static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsigned char* bitmapScan0Ptr, int bitmapStride, int bitmapWidth, int bitmapHeight, bool is32bpp)
 {
     int i = 0;
     float val = 0.0f;
@@ -311,6 +493,7 @@ static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsig
                 px.R = result;
                 px.G = result;
                 px.B = result;
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGRA*)(bitmapScan0Ptr + (x * 4 + yIndex)) = px;
             }
             else 
@@ -319,6 +502,7 @@ static void Utils_ConvertFloatArrayGrayscaleToBitmap(float* floatArrayPtr, unsig
                 px.R = result;
                 px.G = result;
                 px.B = result;
+                #pragma warning (suppress : 26451)
                 *(PixelDataBGR*)(bitmapScan0Ptr + (x * 3 + yIndex)) = px;
             }
         }

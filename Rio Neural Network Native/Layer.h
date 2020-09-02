@@ -9,24 +9,27 @@ using namespace std;
 #include "Activations.h"
 #include "LayerCfg.h"
 
+#define NOINLINE __declspec(noinline)
 
 struct Layer
 {
 public:
 	int NeuronsCount;
 	int NeuronsWeightsSize;
-	float LayerLearnRate;
+	Activation* ActivationFunc;
 	float** Weights;
 	float** WeightsMomentum;
 	float* Outputs;
 	float* Errors;
+	float LearnRate;
 	ActivationTypes ActivationType;
-	Activation* ActivationFunc;
+	ThreadingMode ThreadingMode;
 	
 
-	Layer();
 
-	Layer(LayerCfg layerCfg);
+	NOINLINE Layer();
 
-	~Layer();
+	NOINLINE Layer(LayerCfg layerCfg);
+
+	NOINLINE ~Layer();
 };

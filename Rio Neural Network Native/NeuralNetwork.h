@@ -5,10 +5,12 @@
 using namespace std;
 #include <iostream>
 #include <immintrin.h>
+#include <omp.h>
 
 #include "Layer.h"
 #include "LayerCfg.h"
 
+#define NOINLINE __declspec(noinline)
 
 struct NeuralNetwork
 {
@@ -17,18 +19,18 @@ public:
     Layer** Layers;
 
 
-    NeuralNetwork(LayerCfg* layersCfg, int layersCount);
+    NOINLINE NeuralNetwork(LayerCfg* layersCfg, int layersCount);
 
-    ~NeuralNetwork();
+    NOINLINE ~NeuralNetwork();
 
 
-    float* ForwardPropagate(float* input, bool setInputToFirstLayerOutput);
+    NOINLINE float* ForwardPropagate(float* input, bool setInputToFirstLayerOutput);
 
-    void BackwardPropagateError(float* expected);
+    NOINLINE void BackwardPropagateError(float* expected);
 
-    void UpdateWeights(float* inputArrayPtr, int inputArraySize, float learnRate, float alpha);
+    NOINLINE void UpdateWeights(float* inputArrayPtr, int inputArraySize, float learnRate, float alpha);
 
 private:
-    void InternalUpdateWeights(float* neuronWeightsPtr, float* neuronWeightsMomentumPtr, float* inputPtr, int inputSize, float errorPlusCoeff, float alpha);
-    float Activate(float* weights, float* inputs, int n);
+    NOINLINE void InternalUpdateWeights(float* neuronWeightsPtr, float* neuronWeightsMomentumPtr, float* inputPtr, int inputSize, float errorPlusCoeff, float alpha);
+    NOINLINE float Activate(float* weights, float* inputs, int n);
 };

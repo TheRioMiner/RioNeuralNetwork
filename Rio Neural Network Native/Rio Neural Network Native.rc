@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,2,2
- PRODUCTVERSION 1,0,2,2
+ FILEVERSION 1,0,3,0
+ PRODUCTVERSION 1,0,3,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,12 +68,12 @@ BEGIN
         BLOCK "041904b0"
         BEGIN
             VALUE "CompanyName", "TheRioMiner"
-            VALUE "FileVersion", "1.0.2.2"
+            VALUE "FileVersion", "1.0.3.0"
             VALUE "InternalName", "RioNeuralNetworkNative.dll"
             VALUE "LegalCopyright", "Copyright (C) TheRioMiner 2020"
             VALUE "OriginalFilename", "RioNeuralNetworkNative.dll"
             VALUE "ProductName", "Rio Neural Network"
-            VALUE "ProductVersion", "1.0.2.2"
+            VALUE "ProductVersion", "1.0.3.0"
         END
     END
     BLOCK "VarFileInfo"

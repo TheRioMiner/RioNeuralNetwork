@@ -32,7 +32,7 @@ NeuralNetwork::~NeuralNetwork()
 }
 
 
-//AVX2 accelerated activation
+//AVX accelerated activation
 float NeuralNetwork::Activate(float* weights, float* inputs, int size)
 {
     int n = (size - 1);
@@ -44,12 +44,12 @@ float NeuralNetwork::Activate(float* weights, float* inputs, int size)
     __m256 mainResult = _mm256_setzero_ps();
     for (; i < mainCount; i += 8)
     {
-        //First result
+        //Multiply inputs and weights
         __m256 ni = _mm256_load_ps(inputs + i);
         __m256 w = _mm256_load_ps(weights + i);
         __m256 result = _mm256_mul_ps(ni, w);
 
-        //Sum results
+        //Add result into total result
         mainResult = _mm256_add_ps(mainResult, result);
     }
     //Get result from main cycle
@@ -82,13 +82,30 @@ float* NeuralNetwork::ForwardPropagate(float* inputPtr, bool setInputToFirstLaye
     else 
     {
         //Propagate first layer
-        for (int j = 0; j < pFirstLayer->NeuronsCount; j++)
+        if (Utils_BeginThreading(pFirstLayer->ThreadingMode))
         {
-            //Activate
-            float activation = Activate(pFirstLayer->Weights[j], inputPtr, pFirstLayer->NeuronsWeightsSize);
+            //Multi-thread
+            #pragma omp parallel for 
+            for (int j = 0; j < pFirstLayer->NeuronsCount; j++)
+            {
+                //Activate
+                float activation = Activate(pFirstLayer->Weights[j], inputPtr, pFirstLayer->NeuronsWeightsSize);
 
-            //And transfer to output
-            pFirstLayer->Outputs[j] = pFirstLayer->ActivationFunc->Transfer(activation);
+                //And transfer to output
+                pFirstLayer->Outputs[j] = pFirstLayer->ActivationFunc->Transfer(activation);
+            }
+        }
+        else
+        {
+            //Single-thread
+            for (int j = 0; j < pFirstLayer->NeuronsCount; j++)
+            {
+                //Activate
+                float activation = Activate(pFirstLayer->Weights[j], inputPtr, pFirstLayer->NeuronsWeightsSize);
+
+                //And transfer to output
+                pFirstLayer->Outputs[j] = pFirstLayer->ActivationFunc->Transfer(activation);
+            }
         }
     }
 
@@ -97,13 +114,30 @@ float* NeuralNetwork::ForwardPropagate(float* inputPtr, bool setInputToFirstLaye
     {
         Layer* pPrevLayer = Layers[i - 1];
         Layer* pCurrLayer = Layers[i];
-        for (int j = 0; j < pCurrLayer->NeuronsCount; j++)
-        {
-            //Activate
-            float activation = Activate(pCurrLayer->Weights[j], pPrevLayer->Outputs, pCurrLayer->NeuronsWeightsSize);
+        if (Utils_BeginThreading(pCurrLayer->ThreadingMode))
+        {       
+            //Multi-thread
+            #pragma omp parallel for 
+            for (int j = 0; j < pCurrLayer->NeuronsCount; j++)
+            {
+                //Activate
+                float activation = Activate(pCurrLayer->Weights[j], pPrevLayer->Outputs, pCurrLayer->NeuronsWeightsSize);
 
-            //And transfer to output
-            pCurrLayer->Outputs[j] = pCurrLayer->ActivationFunc->Transfer(activation);
+                //And transfer to output
+                pCurrLayer->Outputs[j] = pCurrLayer->ActivationFunc->Transfer(activation);
+            }
+        }
+        else
+        {
+            //Single-thread
+            for (int j = 0; j < pCurrLayer->NeuronsCount; j++)
+            {
+                //Activate
+                float activation = Activate(pCurrLayer->Weights[j], pPrevLayer->Outputs, pCurrLayer->NeuronsWeightsSize);
+
+                //And transfer to output
+                pCurrLayer->Outputs[j] = pCurrLayer->ActivationFunc->Transfer(activation);
+            }
         }
     }
 
@@ -119,31 +153,64 @@ void NeuralNetwork::BackwardPropagateError(float* expectedPtr)
         Layer* pLayer = Layers[i];
         if (i != lastLayerIndex)
         {
-            for (int j = 0; j < pLayer->NeuronsCount; j++)
+            if (Utils_BeginThreading(pLayer->ThreadingMode))
             {
-                //Calc error
-                float error = 0.0f;
-                Layer* pNextLayer = Layers[i + 1];
-                int neuronsCount = pNextLayer->NeuronsCount;
-                for (int k = 0; k < neuronsCount; k++)
-                    error += pNextLayer->Weights[k][j] * pNextLayer->Errors[k];
+                //Multi-thread
+                #pragma omp parallel for 
+                for (int j = 0; j < pLayer->NeuronsCount; j++)
+                {
+                    //Calc error
+                    float error = 0.0f;
+                    Layer* pNextLayer = Layers[i + 1];
+                    for (int k = 0; k < pNextLayer->NeuronsCount; k++)
+                        error += pNextLayer->Weights[k][j] * pNextLayer->Errors[k];
 
-                //Set
-                pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                    //Set
+                    pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                }
+            }
+            else
+            {
+                //Single-thread
+                for (int j = 0; j < pLayer->NeuronsCount; j++)
+                {
+                    //Calc error
+                    float error = 0.0f;
+                    Layer* pNextLayer = Layers[i + 1];
+                    for (int k = 0; k < pNextLayer->NeuronsCount; k++)
+                        error += pNextLayer->Weights[k][j] * pNextLayer->Errors[k];
+
+                    //Set
+                    pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                }
             }
         }
         else
         {
-            for (int j = 0; j < pLayer->NeuronsCount; j++)
+            if (Utils_BeginThreading(pLayer->ThreadingMode))
             {
-                float error = expectedPtr[j] - pLayer->Outputs[j];
-                pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                //Multi-thread
+                #pragma omp parallel for
+                for (int j = 0; j < pLayer->NeuronsCount; j++)
+                {
+                    float error = expectedPtr[j] - pLayer->Outputs[j];
+                    pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                }
+            }
+            else
+            {
+                //Single-thread
+                for (int j = 0; j < pLayer->NeuronsCount; j++)
+                {
+                    float error = expectedPtr[j] - pLayer->Outputs[j];
+                    pLayer->Errors[j] = error * pLayer->ActivationFunc->TransferDerivative(pLayer->Outputs[j]);
+                }
             }
         }
     }
 }
 
-//AVX2 accelerated update weights
+//AVX accelerated update weights
 void NeuralNetwork::InternalUpdateWeights(float* neuronWeightsPtr, float* neuronWeightsMomentumPtr, float* inputPtr, int inputSize, float errorPlusCoeff, float alpha)
 {
     //Main cycle
@@ -188,18 +255,39 @@ void NeuralNetwork::UpdateWeights(float* inputArrayPtr, int inputArraySize, floa
         }
 
         Layer* pLayer = Layers[i];
-        for (int j = 0; j < pLayer->NeuronsCount; j++)
+        float learnCoeff = (learnRate * pLayer->LearnRate);
+        if (Utils_BeginThreading(pLayer->ThreadingMode))
         {
-            float neuronError = pLayer->Errors[j];
-            float errorPlusCoeff = (learnRate * pLayer->LayerLearnRate) * neuronError;
-            float* neuronWeightsPtr = pLayer->Weights[j];
-            float* neuronWeightsMomentumPtr = pLayer->WeightsMomentum[j];
-            InternalUpdateWeights(neuronWeightsPtr, neuronWeightsMomentumPtr, inputPtr, inputSize, errorPlusCoeff, alpha);
+            //Multi-thread
+            #pragma omp parallel for 
+            for (int j = 0; j < pLayer->NeuronsCount; j++)
+            {
+                float errorPlusCoeff = learnCoeff * pLayer->Errors[j];
+                float* neuronWeightsPtr = pLayer->Weights[j];
+                float* neuronWeightsMomentumPtr = pLayer->WeightsMomentum[j];
+                InternalUpdateWeights(neuronWeightsPtr, neuronWeightsMomentumPtr, inputPtr, inputSize, errorPlusCoeff, alpha);
 
-            //Calc last
-            float lastMomentum = neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1];
-            neuronWeightsPtr[pLayer->NeuronsWeightsSize - 1] += errorPlusCoeff + alpha * lastMomentum;
-            neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1] = errorPlusCoeff;
+                //Calc last (bias?)
+                float lastMomentum = neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1];
+                neuronWeightsPtr[pLayer->NeuronsWeightsSize - 1] += errorPlusCoeff + alpha * lastMomentum;
+                neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1] = errorPlusCoeff;
+            }
+        }
+        else
+        {
+            //Single-thread
+            for (int j = 0; j < pLayer->NeuronsCount; j++)
+            {
+                float errorPlusCoeff = learnCoeff * pLayer->Errors[j];
+                float* neuronWeightsPtr = pLayer->Weights[j];
+                float* neuronWeightsMomentumPtr = pLayer->WeightsMomentum[j];
+                InternalUpdateWeights(neuronWeightsPtr, neuronWeightsMomentumPtr, inputPtr, inputSize, errorPlusCoeff, alpha);
+
+                //Calc last (bias?)
+                float lastMomentum = neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1];
+                neuronWeightsPtr[pLayer->NeuronsWeightsSize - 1] += errorPlusCoeff + alpha * lastMomentum;
+                neuronWeightsMomentumPtr[pLayer->NeuronsWeightsSize - 1] = errorPlusCoeff;
+            }
         }
     }
 }

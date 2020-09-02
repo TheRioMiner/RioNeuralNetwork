@@ -2,6 +2,7 @@
 
 #pragma once
 #include "Activation.h"
+#include "ThreadingMode.h"
 
 struct LayerCfg
 {
@@ -10,4 +11,5 @@ public:
     int NeuronsWeightsSize;
     ActivationTypes ActivationType;
     float LayerLearnRate;
+    ThreadingMode LayerThreadingMode;
 };

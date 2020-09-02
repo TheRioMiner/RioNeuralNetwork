@@ -9,7 +9,8 @@ Layer::Layer()
 	NeuronsCount = 0;
 	NeuronsWeightsSize = 0;
 
-	LayerLearnRate = 1.0f;
+	LearnRate = 1.0f;
+	ThreadingMode = ThreadingMode::INVALID;
 
 	Weights = nullptr;
 	WeightsMomentum = nullptr;
@@ -27,7 +28,10 @@ Layer::Layer(LayerCfg layerCfg)
 	NeuronsWeightsSize = layerCfg.NeuronsWeightsSize + 1/*bias*/;
 
 	//Set layer learn rate
-	LayerLearnRate = layerCfg.LayerLearnRate;
+	LearnRate = layerCfg.LayerLearnRate;
+
+	//Set threading mode
+	ThreadingMode = layerCfg.LayerThreadingMode;
 
 	//Init weights
 	Weights = new float*[NeuronsCount];
@@ -38,8 +42,8 @@ Layer::Layer(LayerCfg layerCfg)
 		WeightsMomentum[i] = (float*)_mm_malloc(NeuronsWeightsSize * sizeof(float), sizeof(__m256));
 
 		//Fill with zeroes
-		Utils_AVX2_FloatArrayFill(&Weights[i][0], NeuronsWeightsSize, 0.0f);
-		Utils_AVX2_FloatArrayFill(&WeightsMomentum[i][0], NeuronsWeightsSize, 0.0f);
+		Utils_FloatArrayFill(&Weights[i][0], 0.0f, NeuronsWeightsSize);
+		Utils_FloatArrayFill(&WeightsMomentum[i][0], 0.0f, NeuronsWeightsSize);
 	}
 
 	//Init output and error arrays
@@ -48,8 +52,8 @@ Layer::Layer(LayerCfg layerCfg)
 		Errors = new float[NeuronsCount];
 
 		//Fill with zeroes
-		Utils_AVX2_FloatArrayFill(&Outputs[0], NeuronsCount, 0.0f);
-		Utils_AVX2_FloatArrayFill(&Errors[0], NeuronsCount, 0.0f);
+		Utils_FloatArrayFill(&Outputs[0], 0.0f, NeuronsCount);
+		Utils_FloatArrayFill(&Errors[0], 0.0f, NeuronsCount);
 	}
 
 	//Init activation
@@ -108,7 +112,10 @@ Layer::~Layer()
 	NeuronsWeightsSize = 0;
 
 	//Discard layer learn rate
-	LayerLearnRate = 0.0f;
+	LearnRate = 0.0f;
+
+	//Discard layer threading mode
+	ThreadingMode = ThreadingMode::INVALID;
 
 	//Discard activation
 	ActivationType = ActivationTypes::INVALID;

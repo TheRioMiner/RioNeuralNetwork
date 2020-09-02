@@ -78,7 +78,7 @@ extern "C"
         if (!instance)
             return false; //Null pointer to instance
 
-        //Backward propagate
+        //Update weights
         instance->UpdateWeights(inputArrayPtr, instance->Layers[0]->NeuronsCount, learRate, alpha);
 
         //Success
@@ -89,15 +89,35 @@ extern "C"
 
     //<---- Helpful ---->
 
-    __declspec(dllexport) void FloatArrayFill(float* floatArrayPtr, int floatArraySize, float value)
+    __declspec(dllexport) bool IsProcessorSupportAVX()
     {
-        Utils_AVX2_FloatArrayFill(floatArrayPtr, floatArraySize, value);
+        return Utils_IsProcessorSupportAVX();
+    }
+
+    __declspec(dllexport) int GetProcsNum()
+    {
+        return Utils_GetProcsNum();
+    }
+
+    __declspec(dllexport) void FloatArrayFill(float* floatArrayPtr, float value, int floatArraySize)
+    {
+        Utils_FloatArrayFill(floatArrayPtr, value, floatArraySize);
+    }
+
+    __declspec(dllexport) void FloatArrayRandomAdd(float* floatArrayPtr, int floatArraySize, float noiseCoeff, bool negative, bool limit, int seed, ThreadingMode threadingMode)
+    {
+        Utils_FloatArrayRandomAdd(floatArrayPtr, floatArraySize, noiseCoeff, negative, limit, seed, threadingMode);
+    }
+
+    __declspec(dllexport) void FloatArrayRandomFill(float* floatArrayPtr, int floatArraySize, float noiseCoeff, bool negative, int seed, ThreadingMode threadingMode)
+    {
+        Utils_FloatArrayRandomFill(floatArrayPtr, floatArraySize, noiseCoeff, negative, seed, threadingMode);
     }
 
 
-    __declspec(dllexport) float MeanSquaredError(float* etalonPtr, float* predictedPtr, int size)
+    __declspec(dllexport) float MeanSquaredError(float* etalonPtr, float* predictedPtr, int size, ThreadingMode threadingMode)
     {
-        return Utils_MeanSquaredError(etalonPtr, predictedPtr, size);
+        return Utils_MeanSquaredError(etalonPtr, predictedPtr, size, threadingMode);
     }
 
 
